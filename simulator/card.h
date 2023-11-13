@@ -8,7 +8,7 @@ class card {
         card();
         card(int v, char s);
         int get_value(bool distinct_face);
-        char get_suit();
+        char get_suit(bool numeric);
         void print_card();
 
 };

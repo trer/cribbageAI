@@ -1,0 +1,7 @@
+Test for cribbage game // logic to handle invalid actions taken by the players
+
+GUI? or at least some semi parseable text output
+
+Create clock to log how long it takes to play 1 game
+
+Multi-processing?

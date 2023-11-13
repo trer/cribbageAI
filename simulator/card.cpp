@@ -17,12 +17,29 @@ card::card(int v, char s) {
 
 int card::get_value(bool distinctFace) {
     if (distinctFace) {
-        return min(10, value);
+        return value; 
     }
-    return value;
+    return min(10, value);
 }
 
-char card::get_suit() {
+char card::get_suit(bool numeric) {
+    if (numeric) {
+        switch (suit)
+        {
+        case 'D':
+            return 0;
+        
+        case 'C':
+            return 1;
+        case 'H':
+            return 2;
+        case 'S':
+            return 3;
+        default:
+            return -1;
+            break;
+        }
+    }
     return suit;
 }
 
@@ -50,9 +67,9 @@ void card::print_card() {
     }
     
     if (isLetter) {
-        std:: cout << value << get_suit() << endl;
+        std:: cout << value << get_suit(false) << endl;
     } else {
-        std:: cout << get_value(false) << get_suit() << endl;
+        std:: cout << get_value(false) << get_suit(false) << endl;
     }
     
 }
