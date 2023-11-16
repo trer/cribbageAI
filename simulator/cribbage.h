@@ -16,10 +16,16 @@ class cribbage {
         player *player2;
         player *dealer;
         player *pone;
+        player *current_player;
+        player *current_opp;
+        //hand *current_player_hand_mirror;
+        //hand *current_opp_hand_mirror;
         hand crib;
         card *cut_card;
         int *dealer_score;
         int *pone_score;
+        int *current_player_score;
+        int *current_opp_score;
         int player1_score;
         int player2_score;
         int seed;
@@ -34,6 +40,7 @@ class cribbage {
 
         
         void swap_dealer();
+        void set_current_player(bool pone_to_play);
         
         int play_phase();
         int matching();

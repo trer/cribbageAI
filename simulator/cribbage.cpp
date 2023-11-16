@@ -87,6 +87,21 @@ void cribbage::swap_dealer() {
     }
 }
 
+void cribbage::set_current_player(bool pone_to_play) {
+
+    if (pone_to_play) {
+        current_player = pone;
+        current_opp = dealer;
+        current_player_score = pone_score;
+        current_opp_score = dealer_score;
+    } else {
+        current_player = dealer;
+        current_opp = pone;
+        current_player_score = dealer_score;
+        current_opp_score = pone_score;
+    }
+}
+
 int cribbage::check_win() {
     /*
      * Checks if one of the players has reached 121 points.
@@ -142,62 +157,37 @@ int cribbage::play_phase() {
 
 
     while (pone->get_hand()->get_num_cards() || dealer->get_hand()->get_num_cards()) {
+        
+        set_current_player(pone_to_play); //update current acting player
+
         //get action from acting player
         action a;
-        if (pone_to_play) {
-            //check if player has to call go
-            if (exsists_legal_move(pone->get_hand()->get_cards(), pone->get_hand()->get_num_cards(), sum_cards)) {
-                a = pone->poll_player(false, cards_played, num_cards_played, sum_cards, dealer->get_hand()->get_num_cards(), *pone_score, *dealer_score);
-                //Checking is move is legal
-                if(!check_valid_move(false, cards_played, num_cards_played, sum_cards, crib.get_cards(), pone->get_hand()->get_cards(), pone->get_hand()->get_num_cards(), a)) {
-                    cout << "Pone tried to do an illigal move" << endl;
-                    if (pone == player1) {
-                        cout << "Player1 is pone" << endl;
-                        return -1;
-                    }
-                    if (pone == player2) {
-                        cout << "Player2 is pone" << endl;
-                        return -2;
-                    }
-                    return -3;
+        if (exsists_legal_move(current_player->get_hand()->get_cards(), current_player->get_hand()->get_num_cards(), sum_cards)) {
+            a = current_player->poll_player(false, cards_played, num_cards_played, sum_cards, current_opp->get_hand()->get_num_cards(), *current_player_score, *current_opp_score);
+            //Checking is move is legal
+            if(!check_valid_move(false, cards_played, num_cards_played, sum_cards, crib.get_cards(), current_player->get_hand()->get_cards(), current_player->get_hand()->get_num_cards(), a)) {
+                cout << "Current player tried to do an illigal move" << endl;
+                if (current_player == player1) {
+                    cout << "Player1 is current player" << endl;
+                    return -1;
                 }
-            } else {
-                //if pone has no legal move he has to call go
-                a = action();
+                if (current_player == player2) {
+                    cout << "Player2 is current_player" << endl;
+                    return -2;
+                }
+                return -3;
             }
         } else {
-            //check if dealer has to call go
-            if(exsists_legal_move(dealer->get_hand()->get_cards(), dealer->get_hand()->get_num_cards(), sum_cards)) {
-                a = dealer->poll_player(false, cards_played, num_cards_played, sum_cards, pone->get_hand()->get_num_cards(), *dealer_score, *pone_score); 
-                // Checking if move is legal
-                if(!check_valid_move(false, cards_played, num_cards_played, sum_cards, crib.get_cards(), dealer->get_hand()->get_cards(), dealer->get_hand()->get_num_cards(), a)) {
-                    cout << "Dealer tried to do an illigal move" << endl;
-                    if (dealer == player1) {
-                        cout << "Player1 is dealer" << endl;
-                        return -1;
-                    }
-                    if (dealer == player2) {
-                        cout << "Player2 is dealer" << endl;
-                        return -2;
-                    }
-                    return -3;
-                }
-            } else {
-                a = action();
-            }
-        }   
-
+            //if pone has no legal move he has to call go
+            a = action();
+        }
 
         //if action is not go, then play the card and score the acting player
         if (a.card1 != 0) {
             cards_played[num_cards_played] = *a.card1;
             num_cards_played++;
             sum_cards = sum_cards + a.card1->get_value(false);
-            if (pone_to_play) {
-                *pone_score = *pone_score + score_played_card(cards_played, num_cards_played, a.card1, sum_cards);
-            } else {
-                *dealer_score = *dealer_score + score_played_card(cards_played, num_cards_played, a.card1, sum_cards);
-            }
+            *current_player_score = *current_player_score + score_played_card(cards_played, num_cards_played, a.card1, sum_cards);
         } else {
             //otherwise check if the other player has already called go
             if (pone_to_play) {
@@ -260,6 +250,12 @@ int cribbage::round() {
     hand pone_hand = hand(game_deck);
     dealer_hand.draw(6);
     pone_hand.draw(6);
+
+    // //create mirrors
+    // hand dealer_hand_mirror = dealer_hand;
+    // hand pone_hand_mirror = pone_hand;
+    // current_player_hand_mirror = &pone_hand_mirror; 
+    // current_opp_hand_mirror = &dealer_hand_mirror;
 
     dealer->set_hand(&dealer_hand);
     pone->set_hand(&pone_hand);
