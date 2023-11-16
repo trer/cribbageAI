@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include ".././simulator/scorer.h"
-#include "./utils.h"
+#include ".././simulator/utils.h"
 
 TEST(scorer, scorer15) {
 
@@ -333,4 +333,17 @@ TEST(scorer, run_played) {
     cards[7] = card(1, 'H');
 
     GTEST_ASSERT_EQ(7, score_played_card(cards, 8, &cards[7], 29));
+}
+
+
+TEST(scorer, score_crib) {
+    
+    card cards[5];
+    cards[0] = card(7, 'H');
+    cards[1] = card(3, 'S');
+    cards[2] = card(6, 'D');
+    cards[3] = card(7, 'D');
+    cards[4] = card(2, 'H');
+
+    GTEST_ASSERT_EQ(6, score_cards(cards, 5, true, &cards[4]));
 }

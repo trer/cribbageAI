@@ -3,7 +3,7 @@
 #include <random>
 
 class deck {
-    private:
+    protected:
         int num_cards;
         card cards[52];
         card cut_card;
@@ -15,8 +15,18 @@ class deck {
         deck();
         deck(int seed);
         void set_seed(int seed);
-        void shuffle();
+        virtual void shuffle();
         card *deal_top();
         card * cut();
         void print_deck();
+};
+
+class mock_deck : public deck {
+    private:
+        card top13[13];
+        bool top13_set;
+    public:
+        mock_deck();
+        void shuffle() override;
+        void set_top_13_cards(card* cards);
 };

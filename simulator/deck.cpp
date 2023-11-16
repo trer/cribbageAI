@@ -1,8 +1,8 @@
+#pragma once
 #include "./deck.h"
 #include <iostream>
 #include <string>
 #include <random>
-#include "deck.h"
 
 using namespace std;
 
@@ -85,3 +85,28 @@ void deck::print_deck(){
 }
 
 
+mock_deck::mock_deck() {
+    top13[13];
+    top13_set = false;
+
+}
+
+void mock_deck::shuffle() {
+    num_cards = 52;
+    cut_card = card();
+    if (top13_set) {
+        set_top_13_cards(top13);
+    } else {
+        cout << "cards not set, using default" << endl;
+        deck::shuffle();
+    }
+}
+
+void mock_deck::set_top_13_cards(card* in_cards) {
+    for (int i = 0; i < 13; i++) {
+        top13[i] = in_cards[i];
+        cards[num_cards-i-1] = in_cards[i];
+    }
+    top13_set = true;
+    
+}

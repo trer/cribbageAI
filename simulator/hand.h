@@ -16,6 +16,7 @@ class hand {
         hand();
         hand(deck * indeck);
         hand(deck *in_deck, card* in_cards, int in_num_cards);
+        void init(int in_num_cards=0);
         void set_deck(deck* indeck);
         void draw(int num_cards);
         void draw_cut();

@@ -1,38 +1,51 @@
+#pragma once
 #include "./cribbage.h"
-#include "cribbage.h"
+
 
 using namespace std;
 
 
 
 
-cribbage::cribbage(int in_seed) : gen(in_seed), distrib(1, 2){
+cribbage::cribbage(int in_seed, int first_dealer, deck* in_deck) : gen(in_seed), distrib(1, 2){
     seed = in_seed;
 
     player1_ready = false;
     player2_ready = false;
-    init();
+    init(first_dealer, in_deck);
 }
 
 
-cribbage::cribbage(int in_seed, player *player1_in, player *player2_in): gen(in_seed), distrib(1, 2) {
+cribbage::cribbage(int in_seed, player *player1_in, player *player2_in, int first_dealer, deck* in_deck): gen(in_seed), distrib(1, 2) {
     seed = in_seed; 
 
     set_player(player1_in, 1);
     set_player(player2_in, 2);
     
-    init();
+    init(first_dealer, in_deck);
 }
 
-void cribbage::init() {
-    game_deck = deck(distrib(gen));
+void cribbage::init(int first_dealer, deck* in_deck) {
+    base_deck = deck(distrib(gen));
+    if (in_deck == nullptr) {
+        game_deck = &base_deck;
+    } else {
+        game_deck = in_deck;
+    }
     
     wins[0] = 0;
     wins[1] = 0;
-    reset();
+    reset(first_dealer);
 }
 
-void cribbage::reset() {
+void cribbage::set_deck(deck *in_deck) {
+    /*
+     * Supports insertion of specialized decks
+    */
+   game_deck = in_deck;
+}
+
+void cribbage::reset(int first_dealer) {
         
 
     player1_score = 0;
@@ -40,9 +53,8 @@ void cribbage::reset() {
 
     dealer_score = &player1_score;
     pone_score = &player2_score;
-    
-    current_dealer = distrib(gen)%2; //use seed to set dealer with some randoming
-    
+
+    current_dealer = first_dealer; //use seed to set dealer with some randoming
 }
 
 
@@ -76,6 +88,10 @@ void cribbage::swap_dealer() {
 }
 
 int cribbage::check_win() {
+    /*
+     * Checks if one of the players has reached 121 points.
+     * Not able to tell which player reached first, so has to be called each time a player gets more points.
+    */
     if (player1_score >= 121) {
         return 1;
     }
@@ -86,11 +102,11 @@ int cribbage::check_win() {
 }
 
 int cribbage::start_game() {
-    swap_dealer();
-    while(!round()) {
-        swap_dealer();
+    int w = 0;
+    while(!w) { //While round doesn't end in a win keep playing
+        w = round();
     }
-    return check_win();
+    return w; // return the winner
 }
 
 int *cribbage::start_games(int num_games) {
@@ -105,6 +121,17 @@ int *cribbage::start_games(int num_games) {
     return wins;
 }
 
+int cribbage::get_player1_score()
+{
+    return player1_score;
+}
+
+int cribbage::get_player2_score()
+{
+    return player2_score;
+}
+
+
 int cribbage::play_phase() {
     card cards_played[8];
     int num_cards_played = 0;
@@ -118,11 +145,49 @@ int cribbage::play_phase() {
         //get action from acting player
         action a;
         if (pone_to_play) {
-            a = pone->poll_player(false, cards_played, num_cards_played, sum_cards, dealer->get_hand()->get_num_cards(), *pone_score, *dealer_score);
+            //check if player has to call go
+            if (exsists_legal_move(pone->get_hand()->get_cards(), pone->get_hand()->get_num_cards(), sum_cards)) {
+                a = pone->poll_player(false, cards_played, num_cards_played, sum_cards, dealer->get_hand()->get_num_cards(), *pone_score, *dealer_score);
+                //Checking is move is legal
+                if(!check_valid_move(false, cards_played, num_cards_played, sum_cards, crib.get_cards(), pone->get_hand()->get_cards(), pone->get_hand()->get_num_cards(), a)) {
+                    cout << "Pone tried to do an illigal move" << endl;
+                    if (pone == player1) {
+                        cout << "Player1 is pone" << endl;
+                        return -1;
+                    }
+                    if (pone == player2) {
+                        cout << "Player2 is pone" << endl;
+                        return -2;
+                    }
+                    return -3;
+                }
+            } else {
+                //if pone has no legal move he has to call go
+                a = action();
+            }
         } else {
-            a = dealer->poll_player(false, cards_played, num_cards_played, sum_cards, pone->get_hand()->get_num_cards(), *dealer_score, *pone_score); 
-        }
-        
+            //check if dealer has to call go
+            if(exsists_legal_move(dealer->get_hand()->get_cards(), dealer->get_hand()->get_num_cards(), sum_cards)) {
+                a = dealer->poll_player(false, cards_played, num_cards_played, sum_cards, pone->get_hand()->get_num_cards(), *dealer_score, *pone_score); 
+                // Checking if move is legal
+                if(!check_valid_move(false, cards_played, num_cards_played, sum_cards, crib.get_cards(), dealer->get_hand()->get_cards(), dealer->get_hand()->get_num_cards(), a)) {
+                    cout << "Dealer tried to do an illigal move" << endl;
+                    if (dealer == player1) {
+                        cout << "Player1 is dealer" << endl;
+                        return -1;
+                    }
+                    if (dealer == player2) {
+                        cout << "Player2 is dealer" << endl;
+                        return -2;
+                    }
+                    return -3;
+                }
+            } else {
+                a = action();
+            }
+        }   
+
+
         //if action is not go, then play the card and score the acting player
         if (a.card1 != 0) {
             cards_played[num_cards_played] = *a.card1;
@@ -162,6 +227,13 @@ int cribbage::play_phase() {
         //swap current player
         pone_to_play = !pone_to_play;
     }
+    //Last player to play a card gets a point (pone is inverted)
+    if(pone_to_play) {
+        *dealer_score = *dealer_score + 1;
+    } else {
+        *pone_score = *pone_score + 1;
+    }
+
     return 0;
 }
 
@@ -172,6 +244,8 @@ int cribbage::matching() {
         return check_win();
     }
     *dealer_score = *dealer_score + score_cards(dealer);
+    *dealer_score = *dealer_score + score_cards(&crib, true);
+
     if (check_win()) {
         return check_win();
     }
@@ -180,9 +254,10 @@ int cribbage::matching() {
 
 
 int cribbage::round() {
-    game_deck.shuffle();
-    hand dealer_hand = hand(&game_deck);
-    hand pone_hand = hand(&game_deck);
+    swap_dealer();
+    game_deck->shuffle();
+    hand dealer_hand = hand(game_deck);
+    hand pone_hand = hand(game_deck);
     dealer_hand.draw(6);
     pone_hand.draw(6);
 
@@ -191,30 +266,41 @@ int cribbage::round() {
 
     action discard1 = dealer->poll_player(true, 0, 0, 0, 6, *dealer_score, *pone_score);
     action discard2 = pone->poll_player(true, 0, 0, 0, 6, *pone_score, *dealer_score);
+    if(!check_valid_move(true, nullptr, 0, 0, nullptr, dealer_hand.get_cards(), dealer_hand.get_num_cards(), discard1)) {
+        cout << "Player 1 tried to do an illigal move" << endl;
+        return -1;
+    }
+    if(!check_valid_move(true, nullptr, 0, 0, nullptr, pone_hand.get_cards(), pone_hand.get_num_cards(), discard2)) {
+        cout << "Player 2 tried to do an illigal move" << endl;
+        return -2;
+    }
     card crib_cards[4];
     crib_cards[0] = *discard1.card1;
     crib_cards[1] = *discard1.card2;
     crib_cards[2] = *discard2.card1;
     crib_cards[3] = *discard2.card2;
 
-    hand crib = hand(&game_deck, crib_cards, 4);
+    crib = hand(game_deck, crib_cards, 4);
 
     //give the cut to all hands
     dealer_hand.draw_cut();
     pone_hand.draw_cut();
     crib.draw_cut();
 
-    *dealer_score = *dealer_score + score_cut(game_deck.cut());
+    *dealer_score = *dealer_score + score_cut(game_deck->cut());
     if (check_win()) {
         return check_win();
     }
 
-    if (play_phase()) {
-        return check_win();
+    int play_phase_winner = play_phase(); //supports error handling
+    if (play_phase_winner) {
+        return play_phase_winner;
     }
 
+    //setting all hand sizes to 5 before matching
     pone_hand.set_num_cards(5);
     dealer_hand.set_num_cards(5);
+    crib.set_num_cards(5);
 
     if(matching()) {
         return check_win();

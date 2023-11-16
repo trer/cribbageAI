@@ -4,10 +4,13 @@
 #include "./hand.h"
 #include "./player.h"
 #include "./scorer.h"
+#include"./utils.h"
+#include <iostream>
 
 class cribbage {
     private:
-        deck game_deck;
+        deck base_deck;
+        deck* game_deck;
         card * played_cards;
         player *player1;
         player *player2;
@@ -29,21 +32,28 @@ class cribbage {
         std::mt19937 gen;
         std::uniform_int_distribution<int> distrib;
 
+        
         void swap_dealer();
+        
         int play_phase();
         int matching();
-        int round();
+        
         int check_win();
-        void reset();
+        void reset(int first_dealer=0);
 
     
     public:
-        cribbage(int seed);
-        void init();
+        int round();
+        cribbage(int seed, int first_dealer=0, deck* in_deck=nullptr);
+        cribbage(int seed, player *player1, player *player2, int first_dealer=0, deck* in_deck=nullptr);
+        void init(int first_dealer=0, deck* in_deck=nullptr);
+        void set_deck(deck* in_deck);
         void set_player(player *player, int num);
-        cribbage(int seed, player *player1, player *player2);
         int start_game();
         int* start_games(int num_games);
+
+        int get_player1_score();
+        int get_player2_score();
 
         
 

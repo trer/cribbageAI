@@ -1,7 +1,5 @@
-#include "./hand.h"
-#include "./card.h"
-#include "./card.h"
-#include "./player.h"
+#pragma once
+#include "./scorer.h"
 #include <cmath>
 
 using namespace std;

@@ -10,6 +10,7 @@ set(headers
     hand.h
     player.h
     scorer.h
+    utils.h
 )
 
 set(sources
@@ -20,6 +21,7 @@ set(sources
     hand.cpp
     player.cpp
     scorer.cpp
+    utils.cpp
 )
 
 add_library(${this} STATIC ${headers} ${sources})

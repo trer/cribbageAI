@@ -1,3 +1,4 @@
+#pragma once
 #include "./card.h"
 #include <iostream>
 #include <string>
@@ -46,7 +47,7 @@ char card::get_suit(bool numeric) {
 void card::print_card() {
     bool isLetter = false;
     string charValue;
-
+    string s;
     switch (value)
     {
     case 13:
@@ -65,11 +66,30 @@ void card::print_card() {
     default:
         break;
     }
+
+    switch (suit)
+    {
+    case 'D':
+        s = "♢";
+        break;
+    case 'C':
+        s="♣";
+        break;
+    case 'H':
+        s="♡";
+        break;
+    case 'S':
+        s="♠";
+        break;
+    default:
+        s="N";
+        break;
+    }
     
     if (isLetter) {
-        std:: cout << value << get_suit(false) << endl;
+        std:: cout << value << s << endl;
     } else {
-        std:: cout << get_value(false) << get_suit(false) << endl;
+        std:: cout << get_value(false) << s << endl;
     }
     
 }

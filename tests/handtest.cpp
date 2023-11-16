@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include ".././simulator/hand.h"
-#include "./utils.h"
+#include ".././simulator/utils.h"
 
 TEST(card, hand_test) {
     std::random_device rd;  // a seed source for the random number engine

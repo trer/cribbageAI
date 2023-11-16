@@ -1,4 +1,12 @@
-Test for cribbage game // logic to handle invalid actions taken by the players
+Refactor play phase to keep variables of current player?
+It is starting to become quite hard to keep track of what is happening in it.
+Might also be solved by more functions.
+
+Might want to mirror the hand passed to the players inside the cribbage.cpp such that the players can't cheat.
+Might be nice to have once I start doing search.
+So that I can make sure that the players are playing cards actually in their hand.
+
+Currently a player could change the cards in his hand, and then play the changed card.
 
 GUI? or at least some semi parseable text output
 

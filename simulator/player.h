@@ -1,6 +1,7 @@
 #pragma once
 #include "./hand.h"
 #include "./action.h"
+#include "./utils.h"
 
 
 
@@ -42,6 +43,17 @@ class realplayer : public player{
 
     public:
         realplayer();
+        action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp);     
+
+};
+
+class mockplayer : public player{
+
+
+    public:
+        int order[6];
+        int count;
+        mockplayer();
         action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp);     
 
 };

@@ -1,7 +1,7 @@
+#pragma once
 #include "./player.h"
 #include <iostream>
 #include <string>
-#include "player.h"
 
 using namespace std;
 
@@ -139,4 +139,36 @@ action realplayer::poll_player(bool discard_phase, card *cards_played, int num_c
         return play_a_card(sum_cards);
     }
 
+}
+
+mockplayer::mockplayer() {
+    /*
+     * A player that gets a predetermined order it should play its card in. Used for testing of the cribbage class
+    */
+    count = 0;
+    order;
+}
+
+action mockplayer::poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp) {
+    action a;
+    switch (count)
+    {
+    case 0:
+        a = action(player_hand->get_card(order[count]), player_hand->get_card(order[count+1]));
+        player_hand->remove_2card(order[count], order[count+1]);
+        count++;
+        break;
+    case -1:
+        a = action();
+    default:
+        a = action(player_hand->get_card(order[count]));
+        player_hand->remove_card(order[count]);
+        break;
+    }
+
+    count++;
+    if (count >= 6) {
+        count = 0;
+    }
+    return a;
 }

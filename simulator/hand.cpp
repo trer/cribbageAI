@@ -1,7 +1,7 @@
+#pragma once
 #include "./hand.h"
 #include <iostream>
 #include <string>
-#include "hand.h"
 
 using namespace std;
 
@@ -9,26 +9,27 @@ using namespace std;
 //might want to increase the max_number of cards to 7 if I want to brute force best hand
 
 hand::hand() {
-    num_cards = 0;
-    cards;
-    score = -1;
-    draw_deck;
-    cut_drawn = 0;
+    init();
 }
 
 hand::hand(deck *in_deck) {
-    num_cards = 0; //The number of cards in the hand currently
-    cards; //array with the accual cards
-    score = -1; //remember the score for the hand (should be set by the player or a scorer class)
     draw_deck = in_deck; // Deck the hand draws cards from.
-    cut_drawn = 0; // counter/bool keeping checking if the cut card is available (will be in cards[num_cards] if it exists)
+    init();
 }
 
 hand::hand(deck *in_deck, card* in_cards, int in_num_cards) {
+    draw_deck = in_deck;
     num_cards = in_num_cards;
     for(int i=0; i<num_cards; i++) {
         cards[i] = in_cards[i];
     }
+    init(in_num_cards);
+}
+
+void hand::init(int in_num_cards) {
+    num_cards = in_num_cards; //The number of cards in the hand currently
+    score = -1; //remember the score for the hand (should be set by the player or a scorer class)
+    cut_drawn = 0; // counter/bool keeping checking if the cut card is available (will be in cards[num_cards] if it exists) 
 }
 
 void hand::set_deck(deck *in_deck) {

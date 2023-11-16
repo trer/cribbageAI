@@ -7,13 +7,13 @@ include(CTest)
 enable_testing()
 
 set(sources
-    utils.h
-    utils.cpp
+    utilstest.cpp
     cardtest.cpp
     decktest.cpp
     handtest.cpp
     maintest.cpp
     scorertest.cpp
+    cribbagetest.cpp
 )
 
 
