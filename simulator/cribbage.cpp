@@ -260,8 +260,8 @@ int cribbage::round() {
     dealer->set_hand(&dealer_hand);
     pone->set_hand(&pone_hand);
 
-    action discard1 = dealer->poll_player(true, 0, 0, 0, 6, *dealer_score, *pone_score);
     action discard2 = pone->poll_player(true, 0, 0, 0, 6, *pone_score, *dealer_score);
+    action discard1 = dealer->poll_player(true, 0, 0, 0, 6, *dealer_score, *pone_score);
     if(!check_valid_move(true, nullptr, 0, 0, nullptr, dealer_hand.get_cards(), dealer_hand.get_num_cards(), discard1)) {
         cout << "Player 1 tried to do an illigal move" << endl;
         return -1;

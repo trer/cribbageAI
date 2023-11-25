@@ -70,16 +70,16 @@ void card::print_card() {
     switch (suit)
     {
     case 'D':
-        s = "♢";
+        //s = "♢";
         break;
     case 'C':
-        s="♣";
+        //s="♣";
         break;
     case 'H':
-        s="♡";
+        //s="♡";
         break;
     case 'S':
-        s="♠";
+        //s="♠";
         break;
     default:
         s="N";
@@ -87,9 +87,9 @@ void card::print_card() {
     }
     
     if (isLetter) {
-        std:: cout << value << s << endl;
+        std:: cout << charValue << get_suit(false) << endl;
     } else {
-        std:: cout << get_value(false) << s << endl;
+        std:: cout << get_value(false) << "-"<< get_suit(false) << endl;
     }
     
 }

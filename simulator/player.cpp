@@ -49,12 +49,12 @@ action randomplayer::discard_two_random_cards() {
     int pos2 = pos1 - 1;
 
 
-    card* c1 = player_hand->get_card(pos1);
-    card* c2 = player_hand->get_card(pos2);
+    c1 = *player_hand->get_card(pos1);
+    c2 = *player_hand->get_card(pos2);
 
     player_hand->remove_2card(pos1, pos2);
 
-    return action(c1, c2);
+    return action(&c1, &c2);
 }
 
 action randomplayer::play_random_card() {
@@ -66,9 +66,9 @@ action randomplayer::play_random_card() {
     int num_cards = player_hand->get_num_cards();
     for (int i=0; i<=num_cards; i++) {
         if (legal_moves[i]) {
-            card* c1 = player_hand->get_card(i);
+            c1 = *player_hand->get_card(i);
             player_hand->remove_card(i);
-            return action(c1);
+            return action(&c1);
         }
     }
     return action();
@@ -95,8 +95,8 @@ action realplayer::discard_two_cards() {
     cin >> pos1;
     cout << "Give index of second card you want to discard";
     cin >> pos2;
-    card c1 = *player_hand->get_card(pos1);
-    card c2 = *player_hand->get_card(pos2);
+    c1 = *player_hand->get_card(pos1);
+    c2 = *player_hand->get_card(pos2);
     player_hand->remove_2card(pos1, pos2);
 
     return action(&c1, &c2);
@@ -107,7 +107,7 @@ action realplayer::play_a_card(int sum_cards_played) {
         int pos;
         cout << "Give index of the card you want to play";
         cin >> pos;
-        card c1 = *player_hand->get_card(pos);
+        c1 = *player_hand->get_card(pos);
         player_hand->remove_card(pos);
 
         return action(&c1);

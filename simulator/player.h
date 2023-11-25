@@ -10,6 +10,8 @@ class player {
         hand *player_hand;        
         bool update_legal_moves(int sum_cards_played);
         int legal_moves[6];
+        card c1;
+        card c2;
 
     public:
         player();
