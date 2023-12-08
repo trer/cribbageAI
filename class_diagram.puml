@@ -1,0 +1,39 @@
+@startuml cribbage_class_overview
+
+class action
+class card {
+    char suit
+    int rank
+}
+class deck {
+    int num_cards
+    void shuffle()
+}
+class hand {
+    void addCard()
+    void removeCard()
+}
+class scorer {
+    int scoreHand()
+    int scoreAction()
+}
+class cribbage {
+    int player1_score
+    int player2_score
+}
+abstract class player {
+    action pollPlayer()
+}
+
+
+deck "52" <-- "1" card
+cribbage -- deck : contains >
+hand -- deck : draws from >
+player -- hand : holds 1 >
+cribbage -- player : polls >
+(cribbage, player) . action
+hand - scorer : is scored by >
+action - scorer : is scored by >
+
+
+@enduml

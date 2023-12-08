@@ -23,6 +23,8 @@ bool player::update_legal_moves(int sum_cards_played) {
         if (cards[i].get_value(false) + sum_cards_played <= CRIBBAGE_SUM_CEIL) {
             legal_moves[i] = 1;
             is_legal_move = true;
+        } else {
+            legal_moves[i] = 0;
         }
     }
     return is_legal_move;
@@ -80,7 +82,8 @@ action randomplayer::poll_player(bool discard_phase, card* cards_played, int num
     */
     if (discard_phase) {
         return discard_two_random_cards();
-    } else if (!update_legal_moves(sum_cards)) {
+    }
+    if (!update_legal_moves(sum_cards)) {
         return action();
     } else {
         return play_random_card();
@@ -121,8 +124,8 @@ realplayer::realplayer()
 
 action realplayer::poll_player(bool discard_phase, card *cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp)
 {
-    cout << "Your score: " << score_self;
-    cout << "Opponent score: " << score_opp;
+    cout << "Your score: " << score_self << " ";
+    cout << "Opponent score: " << score_opp << " ";
     cout << "Discad Phase: " << discard_phase << endl;
     cout << "cards played: " << endl;
     for (int i = 0; i < num_cards_played; i++) {
