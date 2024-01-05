@@ -19,7 +19,7 @@ set(sources
 
 add_executable(${this} ${sources})
 
-target_link_libraries(${this} PUBLIC
+target_link_libraries(${this} PUBLIC STATIC
     gtest_main
     CribbageAISimulator
 )

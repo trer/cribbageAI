@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28.0)
 
 set(this CribbageAISimulator)
 
-set(headers
+set(HEARDER_FILES
     action.h
     card.h
     cribbage.h
@@ -13,7 +13,7 @@ set(headers
     utils.h
 )
 
-set(sources
+set(source
     action.cpp
     card.cpp
     cribbage.cpp
@@ -24,4 +24,8 @@ set(sources
     utils.cpp
 )
 
-add_library(${this} STATIC ${headers} ${sources})
+
+add_library(${this} STATIC ${source} ${HEADER_FILES})
+
+
+
