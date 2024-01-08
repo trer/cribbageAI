@@ -3,14 +3,13 @@
 
 namespace py = pybind11;
 
-void init_cribbage(py::module &);
+int add(int a, int b) {
+    return a+b;
+}
 
-namespace mcl {
-
-PYBIND11_MODULE(simulator, m) {
+PYBIND11_MODULE(gui_bind, m) {
     // Optional docstring
     m.doc() = "simulator library";
     
-    init_cribbage(m);
-}
+    m.def("add", &add, "stupid docsting");
 }
