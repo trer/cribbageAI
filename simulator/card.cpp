@@ -1,9 +1,6 @@
 #pragma once
 #include "./card.h"
-#include <iostream>
-#include <string>
 
-using namespace std;
 
 card::card() {
     value = 0;
@@ -20,7 +17,7 @@ int card::get_value(bool distinctFace) {
     if (distinctFace) {
         return value; 
     }
-    return min(10, value);
+    return std::min(10, value);
 }
 
 char card::get_suit(bool numeric) {
@@ -45,24 +42,36 @@ char card::get_suit(bool numeric) {
 }
 
 void card::print_card() {
+    std::cout << string_format() << std::endl;
+}
+    
+
+std::string card::string_format() {
     bool isLetter = false;
-    string charValue;
-    string s;
+    std::string charValue;
+    std::string s;
     switch (value)
     {
     case 13:
         isLetter = true;
-        charValue = "K-";
+        charValue = "K";
         break;
     case 12:
         isLetter = true;
-        charValue = "Q-";
+        charValue = "Q";
         break;
     case 11:
         isLetter = true;
-        charValue = "J-";
+        charValue = "J";
         break;
-    
+    case 10:
+        isLetter = true;
+        charValue = "T";
+        break;
+    case 1:
+        isLetter = true;
+        charValue = "A";
+        break;
     default:
         break;
     }
@@ -87,9 +96,9 @@ void card::print_card() {
     }
     
     if (isLetter) {
-        std:: cout << charValue << get_suit(false) << endl;
+        return  get_suit(false) + charValue;
     } else {
-        std:: cout << get_value(false) << "-"<< get_suit(false) << endl;
+        return get_suit(false) + std::to_string(get_value(false));
     }
     
 }

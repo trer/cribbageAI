@@ -1,15 +1,10 @@
-import os
 import queue
 import time
-from tkinter import Button, Canvas, Entry, Frame, Label, Tk
+from tkinter import Button, Canvas, Frame, Label, OptionMenu, StringVar, Tk
 from PIL import ImageTk, Image
 import threading
 
-class Game():
-
-    def __init__(self):
-        pass
-
+from pyController import Game
 
 
 class App(Tk):
@@ -32,6 +27,7 @@ class App(Tk):
             frame.grid(row=0, column=0, sticky="nsew")
 
         self.fresh = True
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.show_frame(StartPage)
 
     def show_frame(self, context):
@@ -42,10 +38,25 @@ class App(Tk):
             frame.update(game_info_q.get())
         self.fresh = False
         frame.tkraise()
+    
+    def on_closing(self):
+        global stop_threads
+        stop_threads = True
+        game_event.set()
+        self.destroy()
+
+
+
 
 class StartPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
+
+        self.player_types = {
+            "Human player": 'h',
+            "Random player": 'r'
+        }
+
 
         height = 500
         width = 800
@@ -56,31 +67,31 @@ class StartPage(Frame):
         left_frame.place(relx=0, rely=0, relwidth=0.5, relheight=1, anchor='nw')
         name_frame = Frame(left_frame, bg="light green", bd=5)
         name_frame.place(relx=0.5, rely=0.17, relwidth=0.9, relheight=0.7, anchor="n")
-        self.entry_p0 = Entry(name_frame, font=("Courier", 12), bd=3)
-        self.entry_p0.place(relwidth=0.5, relheight=0.2)
-        self.entry_p1 = Entry(name_frame, font=("Courier", 12), bd=3)
-        self.entry_p1.place(relx=0.5, rely=0, relwidth=0.5, relheight=0.2)
+
+        self.clicked_p1 = StringVar()
+        self.clicked_p1.set(next(iter(self.player_types.keys())))
+        self.drop_p1 = OptionMenu(name_frame , self.clicked_p1 , *self.player_types.keys()) 
+        self.drop_p1.place(relwidth=0.5, relheight=0.2)
+
+        self.clicked_p2 = StringVar()
+        self.clicked_p2.set(next(iter(self.player_types.keys())))
+        self.drop_p2 = OptionMenu(name_frame , self.clicked_p2 , *self.player_types.keys()) 
+        self.drop_p2.place(relx=0.5, rely=0, relwidth=0.5, relheight=0.2)
 
         enter_player_label = Label(left_frame, text="Player Names:", font=("Courier", 12), bd=3)
         enter_player_label.place(relx=0.25, rely=0.07, relwidth=0.5, relheight=0.05)
-        # self.entry.bind("<Return>", lambda _: self.button_click(self.entry.get()))
 
         right_frame = Frame(canvas, bg='green', bd=5)
         right_frame.place(relx=1, rely=0, relwidth=0.5, relheight=1, anchor='ne')
 
         button = Button(right_frame, text="START", font=("Courier", 12),
-                        command=lambda: self.button_click(self.entry_p0.get(), self.entry_p1.get(), controller))
+                        command=lambda: self.button_click(self.clicked_p1.get(), self.clicked_p2.get(), controller))
         button.place(relx=0.5, rely=0.9, relwidth=0.3, relheight=0.1, anchor="n")
 
     def button_click(self, entry0, entry1, controller):
-        entry_list = [entry0, entry1]
+
         player_entry_list = [entry0, entry1]
-        print(player_entry_list)
-        player_entry_list = list(set(player_entry_list))
-        for player in player_entry_list:
-            if player == "":
-                player_entry_list.remove(player)
-        print(player_entry_list)
+        player_entry_list = [self.player_types[i] for i in player_entry_list]
         if len(player_entry_list) < 2:
             print("not enough players")
             return
@@ -96,11 +107,13 @@ class GamePage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
 
-        self.restart = False
+        self.restart = True
         self.p1_cards = [0]*6 # max 6
         self.p2_cards = [0]*6 # max 6
         self.crib = [0]*4 # max 4
         self.played_cards = [0]*12 #max len 12
+
+        
 
         height = 500
         width = 800
@@ -118,7 +131,8 @@ class GamePage(Frame):
         self.p1_cards_labels = []
         len_per_card = 1 / len(self.p1_cards)
         for i in range(len(self.p1_cards)):
-            tmp = Label(self.p1_cards_frame, bg="green")
+            tmp = Label(self.p1_cards_frame, bg="green", name="")
+            tmp.name = "not_set"
             tmp.place(relx= (0 + len_per_card * i), relwidth=(len_per_card), relheight=1)
             card_d1 = ImageTk.PhotoImage(
             Image.open("GUI/card_images/default.png").resize((55, 85), Image.LANCZOS))
@@ -136,7 +150,8 @@ class GamePage(Frame):
         
         len_per_card = 1 / len(self.p2_cards)
         for i in range(len(self.p2_cards)):
-            tmp = Label(self.p2_cards_frame, bg="green")
+            tmp = Label(self.p2_cards_frame, bg="green", name="")
+            tmp.name = "not_set"
             tmp.place(relx= (0 + len_per_card * i), relwidth=(len_per_card), relheight=1)
             card_d1 = ImageTk.PhotoImage(
             Image.open("GUI/card_images/default.png").resize((55, 85), Image.LANCZOS))
@@ -150,18 +165,14 @@ class GamePage(Frame):
 
         len_per_card = 1 / len(self.played_cards)
         for i in range(len(self.played_cards)):
-            tmp = Label(self.played_cards_frame, bg="light green")
+            tmp = Label(self.played_cards_frame, bg="light green", name="")
             tmp.place(relx= (0 + len_per_card * i/2), relwidth=55/480, relheight=1)
-            card_d1 = ImageTk.PhotoImage(
-            Image.open("GUI/card_images/card_ST.png").resize((55, 85), Image.LANCZOS))
-            tmp.image = card_d1
-            tmp.configure(image=card_d1)
-            self.played_cards.append(tmp)
+            self.played_card_labels.append(tmp)
 
 
         self.cut_card_frame = Frame(canvas, bg="light green")
         self.cut_card_frame.place(relx=0.3, rely=0.5-0.1, relwidth=55/800, relheight=.2)
-        self.cut_card_label = Label(self.cut_card_frame, bg="light green")
+        self.cut_card_label = Label(self.cut_card_frame, bg="light green", name="")
         self.cut_card_label.place(relx=0, relwidth=1, relheight=1)
         card_d1 = ImageTk.PhotoImage(
         Image.open("GUI/card_images/default.png").resize((55, 85), Image.LANCZOS))
@@ -176,10 +187,10 @@ class GamePage(Frame):
         x_per_card = 2/3
         y_per_card = 3/5
         for i in range(len(self.crib)):
-            tmp = Label(self.crib_frame, bg="light green")
+            tmp = Label(self.crib_frame, bg="light green", name="")
             tmp.place(relx=(0 + x_per_card *(i%2)), rely=(0+y_per_card*(i//2)), relwidth=1/3, relheight=2/5)
             card_d1 = ImageTk.PhotoImage(
-            Image.open("GUI/card_images/card_ST.png").resize((55, 85), Image.LANCZOS))
+            Image.open("GUI/card_images/default.png").resize((55, 85), Image.LANCZOS))
             tmp.image = card_d1
             tmp.configure(image=card_d1)
             self.crib_labels.append(tmp)
@@ -200,285 +211,255 @@ class GamePage(Frame):
         self.p2_status = Label(canvas, text="Pone", font=("Courier", 12), bd=3)
         self.p2_status.place(relx=0.75, rely=0.27, relwidth=.25, relheight=0.03)
 
+        self.next_round_label = Label(canvas, text="Click here for next round!", font=("Courier", 12), bd=3)
+        self.next_round_label.text = "Click here for next round!"
+
+        #self.event_update()
 
     def update(self, game):
+        game_state = game.get_game_state()
 
         if self.restart:
-            card1 = ImageTk.PhotoImage(Image.open(str("GUI/cards/default.png")).resize((55, 85), Image.LANCZOS))
-            self.cc_1.image = card1
-            self.cc_1.configure(image=card1)
+            # set everything back to starting postitions
+            for card in self.p1_cards_labels:
+                tmp = ImageTk.PhotoImage(Image.open("GUI/card_images/default.png").resize((55, 85), Image.LANCZOS))
+                card.image = tmp
+                card.configure(image=tmp)
+            for card in self.p2_cards_labels:
+                tmp = ImageTk.PhotoImage(Image.open("GUI/card_images/default.png").resize((55, 85), Image.LANCZOS))
+                card.image = tmp
+                card.configure(image=tmp)
+    
+            for card in self.played_card_labels:
+                card.configure(image="")
+                #card.place_forget() #make invisible
+            for card in self.crib_labels:
+                card.configure(image="")
+                #card.place_forget() #make invisible
+            
+            card_d1 = ImageTk.PhotoImage(
+            Image.open("GUI/card_images/default.png").resize((55, 85), Image.LANCZOS))
+            self.cut_card_label.image = card_d1
+            self.cut_card_label.configure(image=card_d1)
 
-            card1 = ImageTk.PhotoImage(Image.open(str("GUI/cards/default.png")).resize((55, 85), Image.LANCZOS))
-            self.cc_2.image = card1
-            self.cc_2.configure(image=card1)
-
-            card1 = ImageTk.PhotoImage(Image.open(str("GUI/cards/default.png")).resize((55, 85), Image.LANCZOS))
-            self.cc_3.image = card1
-            self.cc_3.configure(image=card1)
-
-            card1 = ImageTk.PhotoImage(Image.open(str("GUI/cards/default.png")).resize((55, 85), Image.LANCZOS))
-            self.cc_4.image = card1
-            self.cc_4.configure(image=card1)
-
-            card1 = ImageTk.PhotoImage(Image.open(str("GUI/cards/default.png")).resize((55, 85), Image.LANCZOS))
-            self.cc_5.image = card1
-            self.cc_5.configure(image=card1)
+            self.play_phase_already_setup = False
+            self.discard_phase_already_setup = False
+            self.matching_phase_already_setup = False
+            self.num_placed_in_crib = 0
+            self.num_placed_in_play = 0
+            
+            # Game restart
+            game.p1_action_set = False
+            game.p2_action_set = False
             self.restart = False
-        """
-        if game.round_ended:
-            time.sleep(0.3)
-            self.new_round_label.lift(self.action_cover_label)
-            self.button_y.lift(self.action_cover_label)
-            self.button_n.lift(self.action_cover_label)
-            winners = []
-            scores = []
-            for player in game.list_of_players_not_out:
-                if player.win:
-                    winners.append(player)
-                    scores.append(player.score)
-            print(f"gui thinks winners are: {winners}")
-            print(f"and thinks scores are: {scores}")
-            if scores == [[]]:
-                self.winner_label["text"] = "Winner: " + str(winners)
+        
+        
+        if game_state == "discard_phase":
+            #show human players cards
+            self.setup_discard_phase(game)
+        
+
+        if game_state == "play_phase":
+            self.setup_play_phase(game)
+        if len(game.cards_to_place_in_play) > 0:
+            self.place_card_in_play(game.cards_to_place_in_play.pop(0), game)
+
+        if game_state == "matching_phase":
+            self.setup_matching_phase(game)
+            if game.dealer_has_matched_points: #last flag to be set
+                self.next_round_label.place(relx=0.5, rely=0.5, relwidth=.25, relheight=0.03, anchor="center")
+                self.next_round_label.lift()
+                self.next_round_label.configure(text=self.next_round_label.text)
+                self.next_round_label.bind("<Button-1>", lambda e: self.setup_next_round(game))
+        
+        if game.get_game_state() == "game_over":
+            self.next_round_label.configure(text="Game is over! \n The winnner is: "+ str(game.winner) + " \n Click here to start next Game!")
+            self.next_round_label.place(relx=0.5, rely=0.5, relwidth=.5, relheight=0.12, anchor="center")
+            self.next_round_label.lift()
+            self.next_round_label.bind("<Button-1>", lambda e: self.setup_next_game(game))
+     
+
+        self.p1_score_label.text = "Points: " + str(game.get_points(1))
+        self.p1_score_label.configure(text = self.p1_score_label.text)
+        self.p2_score_label.text = "Points: " + str(game.get_points(2))
+        self.p2_score_label.configure(text = self.p2_score_label.text)   
+
+        self.p1_status.text = game.get_player_status(1)
+        self.p1_status.configure(text = self.p1_status.text)
+        self.p2_status.text = game.get_player_status(2)
+        self.p2_status.configure(text = self.p2_status.text)
+
+        if not game_info_q.empty():
+            self.after(20, self.update, game_info_q.get())
+        else:
+            self.check_do_update()
+
+    def check_do_update(self):
+        global stop_threads
+        if do_update.is_set():
+            do_update.clear()
+            print("the queue is empty", game_info_q.empty())
+            
+            if not game_info_q.empty():
+                self.after(20, self.update, game_info_q.get())
             else:
-                try:
-                    for player in game.list_of_players_not_out:
-                        if player.win:
-                            if player.score == max(scores):
-                                self.winner_label["text"] = "Winner: " + str(winners) + "\n" + score_interpreter(player)
-                except IndexError:
-                    pass
-            self.winner_label.lift(self.action_cover_label)
+                self.after(200, self.check_do_update)
+        elif not stop_threads:
+            self.after(200, self.check_do_update)
 
-            self.restart = True
 
+    def setup_matching_phase(self, game):
+        if self.matching_phase_already_setup:
+            pass
+        else:
+            self.reveal_crib(game)
+            self.reveal_player_cards(game)
+            
+            
+            self.matching_phase_already_setup = True
+
+    
+    def setup_play_phase(self, game):
+        if self.play_phase_already_setup:
+            pass
+        else:
+
+            for card in game.cards_to_place_in_crib:
+                self.place_card_in_crib(card)
+
+            
+
+            cut_card_name = game.get_cut_card()
+            tmp = ImageTk.PhotoImage(Image.open("GUI/card_images/card_"+cut_card_name+".png").resize((55, 85), Image.LANCZOS))
+            self.cut_card_label.image = tmp
+            self.cut_card_label.configure(image=tmp)
+            #potentially do some changes to bind
+
+            self.play_phase_already_setup = True         
+
+    def place_card_in_play(self, card_name, game):
+        if card_name == None:
+            self.num_placed_in_play += 2
+            game.new_stack = False
+        else:
+            play_card = self.played_card_labels[self.num_placed_in_play]
+            play_card.name = card_name
+            tmp = ImageTk.PhotoImage(Image.open("GUI/card_images/card_"+card_name+".png").resize((55, 85), Image.LANCZOS))
+            play_card.image = tmp
+            play_card.configure(image=tmp)
+            for card in self.p1_cards_labels + self.p2_cards_labels:
+                if card.name == card_name:
+                    card.configure(image="")
+            self.num_placed_in_play += 1
+                    
+    def place_card_in_crib(self, card):
+        # card.place_forget() #remove card from hand
+        for c in self.p1_cards_labels + self.p2_cards_labels:
+            if c.name == card:
+                c.configure(image="")
+        crib_card = self.crib_labels[self.num_placed_in_crib]
+        tmp = ImageTk.PhotoImage(Image.open("GUI/card_images/default.png").resize((55, 85), Image.LANCZOS))
+        crib_card.image = tmp
+        crib_card.configure(image=tmp)
+        self.num_placed_in_crib += 1
+
+    def reveal_crib(self, game):
+        crib_card_names = game.get_cards(-1)
+        for name, card in zip(crib_card_names, self.crib_labels):
+            card.name = name
+            tmp = ImageTk.PhotoImage(Image.open("GUI/card_images/card_"+name+".png").resize((55, 85), Image.LANCZOS))
+            card.image = tmp
+            card.configure(image=tmp)
+    
+    def reveal_player_cards(self, game):
+        player_card_names = game.get_cards(1)[:4] + game.get_cards(2)[:4]
+        for name, card in zip(player_card_names, self.p1_cards_labels[:4]+self.p2_cards_labels[:4]):
+                # if card.name not in [c.name for c in self.crib_labels] and card.name != "not_set":
+                tmp = ImageTk.PhotoImage(Image.open("GUI/card_images/card_"+name+".png").resize((55, 85), Image.LANCZOS))
+                card.image = tmp
+                card.configure(image=card.image)
+
+    def setup_discard_phase(self, game):
+        if self.discard_phase_already_setup:
             return
-        """
-        """
-        if game.need_raise_info:
-            self.raise_entry.lift(self.action_cover_label)
-            self.raise_button.lift(self.action_cover_label)
-        """
-        """
-        try:
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.cc_1.image = card1
-            self.cc_1.configure(image=card1)
+        
+        card_names = game.get_cards(1)
+        for i in range(len(card_names)):
+            card = self.p1_cards_labels[i]
+            name = card_names[i]
+            card.name=name #name of card set such that we can compare later
+            if game.p1 == 'h':
+                tmp = ImageTk.PhotoImage(Image.open("GUI/card_images/card_"+name+".png").resize((55, 85), Image.LANCZOS))
+                card.image = tmp
+                card.configure(image=tmp)
 
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.cc_2.image = card1
-            self.cc_2.configure(image=card1)
+        if game.p1 == 'h':    
+            #didn't work inside the loop have no idea why :shrug:
+            self.p1_cards_labels[0].bind("<Button-1>", lambda e:self.card_chosen(self.p1_cards_labels[0], game))
+            self.p1_cards_labels[1].bind("<Button-1>", lambda e:self.card_chosen(self.p1_cards_labels[1], game))
+            self.p1_cards_labels[2].bind("<Button-1>", lambda e:self.card_chosen(self.p1_cards_labels[2], game))
+            self.p1_cards_labels[3].bind("<Button-1>", lambda e:self.card_chosen(self.p1_cards_labels[3], game))
+            self.p1_cards_labels[4].bind("<Button-1>", lambda e:self.card_chosen(self.p1_cards_labels[4], game))
+            self.p1_cards_labels[5].bind("<Button-1>", lambda e:self.card_chosen(self.p1_cards_labels[5], game))
 
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.cards[2]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.cc_3.image = card1
-            self.cc_3.configure(image=card1)
 
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.cards[3]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.cc_4.image = card1
-            self.cc_4.configure(image=card1)
+        card_names = game.get_cards(2)
+        for card, name in zip(self.p2_cards_labels, card_names):
+            card.name=name #name of card set such that we can compare later
+            if game.p2 == 'h':      
+                tmp = ImageTk.PhotoImage(Image.open("GUI/card_images/card_"+name+".png").resize((55, 85), Image.LANCZOS))
+                card.image = tmp
+                card.configure(image=tmp)
 
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.cards[4]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.cc_5.image = card1
-            self.cc_5.configure(image=card1)
-        except IndexError:
-            pass
-        try:
-            self.name_label_p0["text"] = game.list_of_players[0]
-            self.name_label_p1["text"] = game.list_of_players[1]
-            self.name_label_p2["text"] = game.list_of_players[2]
-            self.name_label_p3["text"] = game.list_of_players[3]
-            self.name_label_p4["text"] = game.list_of_players[4]
-            self.name_label_p5["text"] = game.list_of_players[5]
-            self.name_label_p6["text"] = game.list_of_players[6]
-            self.name_label_p7["text"] = game.list_of_players[7]
-            self.name_label_p8["text"] = game.list_of_players[8]
-            self.name_label_p9["text"] = game.list_of_players[9]
-        except IndexError:
-            pass
-        try:
-            self.chips_label_p0["text"] = "Chips:\n" + str(game.list_of_players[0].chips)
-            self.chips_label_p1["text"] = "Chips:\n" + str(game.list_of_players[1].chips)
-            self.chips_label_p2["text"] = "Chips:\n" + str(game.list_of_players[2].chips)
-            self.chips_label_p3["text"] = "Chips:\n" + str(game.list_of_players[3].chips)
-            self.chips_label_p4["text"] = "Chips:\n" + str(game.list_of_players[4].chips)
-            self.chips_label_p5["text"] = "Chips:\n" + str(game.list_of_players[5].chips)
-            self.chips_label_p6["text"] = "Chips:\n" + str(game.list_of_players[6].chips)
-            self.chips_label_p7["text"] = "Chips:\n" + str(game.list_of_players[7].chips)
-            self.chips_label_p8["text"] = "Chips:\n" + str(game.list_of_players[8].chips)
-            self.chips_label_p9["text"] = "Chips:\n" + str(game.list_of_players[9].chips)
-        except IndexError:
-            pass
-        try:
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[0].cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card1_p0.image = card1
-            self.card1_p0.configure(image=card1)
+        if game.p2 == 'h':    
+            #didn't work inside the loop have no idea why :shrug:
+            self.p2_cards_labels[0].bind("<Button-1>", lambda e:self.card_chosen(self.p2_cards_labels[0], game))
+            self.p2_cards_labels[1].bind("<Button-1>", lambda e:self.card_chosen(self.p2_cards_labels[1], game))
+            self.p2_cards_labels[2].bind("<Button-1>", lambda e:self.card_chosen(self.p2_cards_labels[2], game))
+            self.p2_cards_labels[3].bind("<Button-1>", lambda e:self.card_chosen(self.p2_cards_labels[3], game))
+            self.p2_cards_labels[4].bind("<Button-1>", lambda e:self.card_chosen(self.p2_cards_labels[4], game))
+            self.p2_cards_labels[5].bind("<Button-1>", lambda e:self.card_chosen(self.p2_cards_labels[5], game))
+        
+        self.discard_phase_already_setup = True
 
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[1].cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card1_p1.image = card1
-            self.card1_p1.configure(image=card1)
 
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[2].cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card1_p2.image = card1
-            self.card1_p2.configure(image=card1)
-
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[3].cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card1_p3.image = card1
-            self.card1_p3.configure(image=card1)
-
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[4].cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card1_p4.image = card1
-            self.card1_p4.configure(image=card1)
-
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[5].cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card1_p5.image = card1
-            self.card1_p5.configure(image=card1)
-
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[6].cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card1_p6.image = card1
-            self.card1_p6.configure(image=card1)
-
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[7].cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card1_p7.image = card1
-            self.card1_p7.configure(image=card1)
-
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[8].cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card1_p8.image = card1
-            self.card1_p8.configure(image=card1)
-
-            card1 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[9].cards[0]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card1_p9.image = card1
-            self.card1_p9.configure(image=card1)
-        except IndexError:
-            pass
-        try:
-            card2 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[0].cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card2_p0.image = card2
-            self.card2_p0.configure(image=card2)
-
-            card2 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[1].cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card2_p1.image = card2
-            self.card2_p1.configure(image=card2)
-
-            card2 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[2].cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card2_p2.image = card2
-            self.card2_p2.configure(image=card2)
-
-            card2 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[3].cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card2_p3.image = card2
-            self.card2_p3.configure(image=card2)
-
-            card2 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[4].cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card2_p4.image = card2
-            self.card2_p4.configure(image=card2)
-
-            card2 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[5].cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card2_p5.image = card2
-            self.card2_p5.configure(image=card2)
-
-            card2 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[6].cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card2_p6.image = card2
-            self.card2_p6.configure(image=card2)
-
-            card2 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[7].cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card2_p7.image = card2
-            self.card2_p7.configure(image=card2)
-
-            card2 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[8].cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card2_p8.image = card2
-            self.card2_p8.configure(image=card2)
-
-            card2 = ImageTk.PhotoImage(
-                Image.open("cards\\" + str(game.list_of_players[9].cards[1]) + ".png").resize((55, 85), Image.LANCZOS))
-            self.card2_p9.image = card2
-            self.card2_p9.configure(image=card2)
-        except IndexError:
-            pass
-        try:
-            self.stake_label_p0["text"] = "Stake: " + str(game.list_of_players[0].stake)
-            self.stake_label_p1["text"] = "Stake: " + str(game.list_of_players[1].stake)
-            self.stake_label_p2["text"] = "Stake: " + str(game.list_of_players[2].stake)
-            self.stake_label_p3["text"] = "Stake: " + str(game.list_of_players[3].stake)
-            self.stake_label_p4["text"] = "Stake: " + str(game.list_of_players[4].stake)
-            self.stake_label_p5["text"] = "Stake: " + str(game.list_of_players[5].stake)
-            self.stake_label_p6["text"] = "Stake: " + str(game.list_of_players[6].stake)
-            self.stake_label_p7["text"] = "Stake: " + str(game.list_of_players[7].stake)
-            self.stake_label_p8["text"] = "Stake: " + str(game.list_of_players[8].stake)
-            self.stake_label_p9["text"] = "Stake: " + str(game.list_of_players[9].stake)
-        except IndexError:
-            pass
-        self.pot_label["text"] = "Pot: " + str(game.pot)
-        if game.game_over:
-            self.actor_label["text"] = "Winner!: " + str(game.winner.name)
-            return
-        print(f"round ended {game.round_ended}")
-
-        self.actor_label["text"] = str(game.acting_player.name)
-
-        variable = StringVar(self.action_frame)
-        variable.initialize("ACTION")
-        w = OptionMenu(self.action_frame, variable, *game.possible_responses)
-        w.place(relx=0, rely=0.05, relheight=0.1, relwidth=0.3)
-        button_go = Button(self.action_frame, text="GO", font=("Courier", 10), command=lambda: self.action_input(variable.get()))
-        button_go.place(relx=1, rely=1, relheight=0.3, relwidth=0.3, anchor="se")
-    """
+    def card_chosen(self, card_label, game):
+        #add some checks that it is indeed the correct players turn
+        if card_label in self.p1_cards_labels:
+            game.add_action(1, card_label.name)
+        elif card_label in self.p2_cards_labels:
+            game.add_action(2, card_label.name)
+        self.action_input("card_chosen")
+    
+    def setup_next_round(self, game):
+        # game.finnish_round()
+        game.setup_round()
+        self.restart = True
+        self.next_round_label.place_forget()
+        self.action_input("starting new round")
+    
+    def setup_next_game(self, game):
+        game.setup_game()
+        self.setup_next_round(game)
+            
 
     def action_input(self, entry0):
 
         response_q.put(entry0)
         game_event.set()
-        time.sleep(0.1)
-        if not game_info_q.empty():
-            self.update(game_info_q.get())
-
-
-
-def ask_app(question, game=""):
-    print("asking...")
-    print(question)
-    answer = ""
-    if game != "":
-        game_info_q.put(game)
-    game_event.wait()
-    if not response_q.empty():
-        answer = response_q.get()
-    game_event.clear()
-
-    return answer
-
-def update_gui(game1):
-    print("updating gui...")
-    print(game1)
+        # self.after(2000) #sleep(0.2)
+        # if not game_info_q.empty():
+        #     self.update(game_info_q.get())
+    
 
 def play(game):
-    game_info_q.put(game)
-    update_gui(game)
-    #play game
-    time.sleep(1)
-    game_info_q.put(game)
+    action = game.do_automatic_action()
+    print(action)
+    if action != "":
+        game_info_q.put(game)
+        do_update.set()
+     
+    time.sleep(0.01)
 
 
 def run_app():
@@ -486,18 +467,25 @@ def run_app():
     app.mainloop()
 
 def run_game_data():
-    game0 = Game()
-    while True:
+    global stop_threads
+    game0 = Game(game_info_q, response_q, game_event)
+    game0.setup_round()
+    game_info_q.put(game0)
+    while not stop_threads:
         play(game0)
 
+stop_threads = False
 game_event = threading.Event()
 response_q = queue.Queue()
 game_info_q = queue.Queue()
-end_update = threading.Event()
+do_update = threading.Event()
 t1 = threading.Thread(target=run_app)
 t1.start()
-t2 = threading.Thread(target=run_game_data())
+t2 = threading.Thread(target=run_game_data)
 t2.start()
+
+t1.join()
+exit()
 
 if __name__ == "__main__":
     print("running")

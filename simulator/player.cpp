@@ -92,8 +92,8 @@ action randomplayer::poll_player(bool discard_phase, card* cards_played, int num
 }
 
 action realplayer::discard_two_cards() {
-    int pos1;
-    int pos2;
+    int pos1 = 0;
+    int pos2 = 0;
     cout << "Give index of first card you want to discard";
     cin >> pos1;
     cout << "Give index of second card you want to discard";

@@ -1,4 +1,6 @@
 #pragma once
+#include <iostream>
+#include <string>
 
 class card {
     private:
@@ -10,5 +12,6 @@ class card {
         int get_value(bool distinct_face);
         char get_suit(bool numeric);
         void print_card();
+        std::string string_format();
 
 };
