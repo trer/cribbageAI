@@ -110,3 +110,11 @@ void mock_deck::set_top_13_cards(card* in_cards) {
     top13_set = true;
     
 }
+
+internal_deck::internal_deck() {
+
+}
+
+card* internal_deck::get_cards(){
+    return cards;
+}

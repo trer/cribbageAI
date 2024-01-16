@@ -1,6 +1,7 @@
 #pragma once
 #include "../simulator/cribbage.h"
 #include "../simulator/player.h"
+#include "../simulator/greedyplayer.h"
 #include "../simulator/utils.h"
 #include <string>
 
@@ -27,6 +28,8 @@ namespace controller {
             randomplayer r2 = randomplayer();
             realplayer h1 = realplayer();
             realplayer h2 = realplayer();
+            greedyplayer g1 = greedyplayer();
+            greedyplayer g2 = greedyplayer();
 
             int resolve_action();
 

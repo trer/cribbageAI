@@ -16,7 +16,7 @@ class player {
     public:
         player();
         
-        virtual action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp) = 0;
+        virtual action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) = 0;
         void set_hand(hand *new_hand);
         hand *get_hand();
 
@@ -32,7 +32,7 @@ class randomplayer : public player{
 
     public:
         randomplayer();
-        action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp);     
+        action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer);     
 
 };
 
@@ -45,7 +45,7 @@ class realplayer : public player{
 
     public:
         realplayer();
-        action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp);     
+        action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer);     
 
 };
 
@@ -56,6 +56,6 @@ class mockplayer : public player{
         int order[6];
         int count;
         mockplayer();
-        action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp);     
+        action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer);     
 
 };

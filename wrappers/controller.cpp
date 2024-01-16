@@ -19,6 +19,9 @@ namespace controller {
             case 'r':
                 player1 = &r1;
                 break;
+            case 'g':
+                player1 = &g1;
+                break;
             default:
                 break;
             }
@@ -31,6 +34,9 @@ namespace controller {
                 break;
             case 'r':
                 player2 = &r2;
+                break;
+            case 'g':
+                player2 = &g2;
                 break;
             default:
                 break;
@@ -239,10 +245,8 @@ namespace controller {
         int score_opp;
         int win=0;
         if (p == 1) {
-            if (player1 == &r1) {
-                player_to_poll = &r1;
-            } //elif
-            //add new players here
+            player_to_poll = player1;
+
             if (discard_set_p1) {
                 discard_phase = false;
             } else {
@@ -254,10 +258,7 @@ namespace controller {
             score_opp = game.player2_score;
 
         } else if (p == 2) {
-            if (player2 == &r2) {
-                player_to_poll = &r2;
-            } //elif  and here
-
+            player_to_poll = player2; 
             if (discard_set_p2) {
                 discard_phase = false;
             } else {
@@ -274,7 +275,7 @@ namespace controller {
             return "";
         }
 
-        action a = player_to_poll->poll_player(discard_phase, game.cards_played, game.num_cards_played, game.sum_cards, opp_num_cards, score_self, score_opp);
+        action a = player_to_poll->poll_player(discard_phase, game.cards_played, game.num_cards_played, game.sum_cards, opp_num_cards, score_self, score_opp, !game.pone_to_play);
         out_string = a.card1->string_format();
         if (discard_phase) {
             game.set_discard(a, p);

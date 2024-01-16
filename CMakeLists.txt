@@ -23,9 +23,8 @@ add_executable(${this} ${source})
 
 add_subdirectory(wrappers)
 add_subdirectory(simulator)
-#add_subdirectory(GUI)
-# add_subdirectory(tests)
-# add_subdirectory(googletest)
+add_subdirectory(tests)
+add_subdirectory(googletest)
 
 
 target_link_libraries(${this} PUBLIC

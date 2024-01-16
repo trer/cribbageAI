@@ -54,7 +54,8 @@ class StartPage(Frame):
 
         self.player_types = {
             "Human player": 'h',
-            "Random player": 'r'
+            "Random player": 'r',
+            "Greedy player": 'g'
         }
 
 

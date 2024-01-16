@@ -40,7 +40,7 @@ int score_cards(card* cards, int num_cards, bool is_crib, card* cut_card) {
     int values_10_and_over = 0;
     for (int i=0; i<num_cards; i++) {
         ranks[cards[i].get_value(true)-1] ++;
-        suits[cards[i].get_suit(true)] ++; //suits are not indexes, prolly change suit internal value
+        suits[cards[i].get_suit(true)] ++;
     }
     for (int i=10; i<13; i++) {
         values_10_and_over = values_10_and_over + ranks[i];
@@ -79,6 +79,11 @@ int score_cards(card* cards, int num_cards, bool is_crib, card* cut_card) {
             num_runs = 1;
             // could probably break here as it shouldn't be possible to have to seperate runs (5 card hand)
         }
+    }
+
+    //extra catch to pick up runs ending with a king
+    if (run_length >= 3) {
+       total_score = total_score + num_runs*run_length;
     }
     
 

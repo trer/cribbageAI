@@ -103,6 +103,15 @@ TEST(scorer, runs) {
 
     GTEST_ASSERT_EQ(10, score_cards(cards, 5, false, &cards[4]));
 
+    //run of 3 ending with king + nobs
+    cards[0] = card(11, 'H');
+    cards[1] = card(9, 'S');
+    cards[2] = card(8, 'D');
+    cards[3] = card(12, 'H');
+    cards[4] = card(13, 'H');
+
+    GTEST_ASSERT_EQ(4, score_cards(cards, 5, false, &cards[4]));
+
 }
 
 

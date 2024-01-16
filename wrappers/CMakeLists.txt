@@ -19,11 +19,13 @@ set(sources
     controllerwrapper.cpp
     ../simulator/cribbage.cpp
     ../simulator/player.cpp
+    ../simulator/greedyplayer.cpp
 )
 
 set(headers
     ../simulator/cribbage.h
     ../simulator/player.h
+    ../simulator/greedyplayer.h
     controller.h
     controllerwrapper.h
 )

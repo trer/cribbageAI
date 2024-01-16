@@ -7,7 +7,7 @@ TEST(cribbage, test_mocks) {
     
     mockplayer p1 = mockplayer();
     mockplayer p2 = mockplayer();
-    cribbage game = cribbage(1, &p1, &p2, 1);
+    simulator::cribbage game = simulator::cribbage(1, &p1, &p2, 1);
 
     mock_deck deck = mock_deck();
     
@@ -23,7 +23,7 @@ TEST(cribbage, test_mocks) {
     //opp hand
     player_and_opp_hand[6] = card(10, 'H');
     player_and_opp_hand[7] = card(11, 'H');
-    player_and_opp_hand[8] = card(13, 'D');
+    player_and_opp_hand[8] = card(13, 'C');
     player_and_opp_hand[9] = card(5, 'S');
     player_and_opp_hand[10] = card(6, 'H');
     player_and_opp_hand[11] = card(7, 'H');
@@ -56,56 +56,56 @@ TEST(cribbage, test_mocks) {
     int winner = game.round(); 
 
     GTEST_ASSERT_EQ(winner, 0);
-    GTEST_ASSERT_EQ(game.get_player1_score(), 16);
+    GTEST_ASSERT_EQ(game.get_player1_score(), 19);
     GTEST_ASSERT_EQ(game.get_player2_score(), 11);
 
     winner = game.round();
     
     GTEST_ASSERT_EQ(winner, 0);
-    GTEST_ASSERT_EQ(game.get_player1_score(), 27);
-    GTEST_ASSERT_EQ(game.get_player2_score(), 27);
+    GTEST_ASSERT_EQ(game.get_player1_score(), 30);
+    GTEST_ASSERT_EQ(game.get_player2_score(), 30);
 
     winner = game.round();
     
     GTEST_ASSERT_EQ(winner, 0);
-    GTEST_ASSERT_EQ(game.get_player1_score(), 43);
-    GTEST_ASSERT_EQ(game.get_player2_score(), 38);
+    GTEST_ASSERT_EQ(game.get_player1_score(), 49);
+    GTEST_ASSERT_EQ(game.get_player2_score(), 41);
 
     winner = game.round();
     
     GTEST_ASSERT_EQ(winner, 0);
-    GTEST_ASSERT_EQ(game.get_player1_score(), 54);
-    GTEST_ASSERT_EQ(game.get_player2_score(), 54);
+    GTEST_ASSERT_EQ(game.get_player1_score(), 60);
+    GTEST_ASSERT_EQ(game.get_player2_score(), 60);
 
     winner = game.round();
     
     GTEST_ASSERT_EQ(winner, 0);
-    GTEST_ASSERT_EQ(game.get_player1_score(), 70);
-    GTEST_ASSERT_EQ(game.get_player2_score(), 65);
+    GTEST_ASSERT_EQ(game.get_player1_score(), 79);
+    GTEST_ASSERT_EQ(game.get_player2_score(), 71);
 
     winner = game.round();
     
     GTEST_ASSERT_EQ(winner, 0);
-    GTEST_ASSERT_EQ(game.get_player1_score(), 81);
-    GTEST_ASSERT_EQ(game.get_player2_score(), 81);
+    GTEST_ASSERT_EQ(game.get_player1_score(), 90);
+    GTEST_ASSERT_EQ(game.get_player2_score(), 90);
 
     winner = game.round();
     
     GTEST_ASSERT_EQ(winner, 0);
-    GTEST_ASSERT_EQ(game.get_player1_score(), 97);
-    GTEST_ASSERT_EQ(game.get_player2_score(), 92);
+    GTEST_ASSERT_EQ(game.get_player1_score(), 109);
+    GTEST_ASSERT_EQ(game.get_player2_score(), 101);
 
     winner = game.round();
     
     GTEST_ASSERT_EQ(winner, 0);
-    GTEST_ASSERT_EQ(game.get_player1_score(), 108);
-    GTEST_ASSERT_EQ(game.get_player2_score(), 108);
+    GTEST_ASSERT_EQ(game.get_player1_score(), 120);
+    GTEST_ASSERT_EQ(game.get_player2_score(), 120);
 
     winner = game.round();
     
     GTEST_ASSERT_EQ(winner, 1);
-    GTEST_ASSERT_EQ(game.get_player1_score(), 124);
-    GTEST_ASSERT_EQ(game.get_player2_score(), 119);
+    GTEST_ASSERT_EQ(game.get_player1_score(), 122);
+    GTEST_ASSERT_EQ(game.get_player2_score(), 120);
 
 }
 
@@ -113,7 +113,7 @@ TEST(cribbage, test_cribbage) {
     
     mockplayer p1 = mockplayer();
     mockplayer p2 = mockplayer();
-    cribbage game = cribbage(1, &p1, &p2, 1);
+    simulator::cribbage game = simulator::cribbage(1, &p1, &p2, 1);
 
     mock_deck deck = mock_deck();
     
@@ -216,7 +216,7 @@ TEST(cribbage, endgame_test) {
     
     mockplayer p1 = mockplayer();
     mockplayer p2 = mockplayer();
-    cribbage game = cribbage(1, &p1, &p2, 1);
+    simulator::cribbage game = simulator::cribbage(1, &p1, &p2, 1);
 
     mock_deck deck = mock_deck();
     

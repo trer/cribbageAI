@@ -10,6 +10,7 @@ set(sources
     utilstest.cpp
     cardtest.cpp
     decktest.cpp
+    greedyplayertest.cpp
     handtest.cpp
     maintest.cpp
     scorertest.cpp
@@ -19,7 +20,7 @@ set(sources
 
 add_executable(${this} ${sources})
 
-target_link_libraries(${this} PUBLIC STATIC
+target_link_libraries(${this} PUBLIC
     gtest_main
     CribbageAISimulator
 )

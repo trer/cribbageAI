@@ -40,9 +40,9 @@ bool exsists_legal_move(card* hand_cards, int num_hand_cards, int sum_cards_play
     return is_legal_move;
 }
 
-bool check_valid_move(bool discard_phase, card *cards_played, int num_cards_played, int sum_cards,
-                      card* crib, card* player_hand, int num_cards_in_player_hand, action player_action)
-{
+bool check_valid_move(bool discard_phase, card *cards_played, int num_cards_played, 
+                    int sum_cards, card* crib, int num_cards_in_crib, card* player_hand, int num_cards_in_player_hand, 
+                    action player_action) {
     /*
      * Checks the validity of a move. Returns true if the move is allowed to play.
      * Makes sure:
@@ -99,7 +99,7 @@ bool check_valid_move(bool discard_phase, card *cards_played, int num_cards_play
             }
         }
         //If the card is part of the crib or cut
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < num_cards_in_crib; i++) {
             if (compare_cards(&crib[i], played_card)) {
                 return false;
             }

@@ -76,7 +76,7 @@ action randomplayer::play_random_card() {
     return action();
 }
 
-action randomplayer::poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp) {
+action randomplayer::poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) {
     /*
      * Plays more or less randomly
     */
@@ -122,7 +122,7 @@ realplayer::realplayer()
 {
 }
 
-action realplayer::poll_player(bool discard_phase, card *cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp)
+action realplayer::poll_player(bool discard_phase, card *cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer)
 {
     cout << "Your score: " << score_self << " ";
     cout << "Opponent score: " << score_opp << " ";
@@ -152,7 +152,7 @@ mockplayer::mockplayer() {
     order;
 }
 
-action mockplayer::poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp) {
+action mockplayer::poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) {
     action a;
     switch (count)
     {

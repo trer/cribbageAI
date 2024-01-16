@@ -12,7 +12,6 @@ namespace simulator {
 class cribbage {
     private:
         deck base_deck;
-        card * played_cards;
         player *current_opp;
         //hand *current_player_hand_mirror;
         //hand *current_opp_hand_mirror;
@@ -20,13 +19,9 @@ class cribbage {
         hand pone_hand;
         card crib_cards[4];
         card *cut_card;
-        action discard2;
-        action discard1;
+        action pone_discards;
+        action dealer_discard;
         action acting_player_action;
-        
-        
-        
-        bool pone_to_play = true;
 
 
         int *dealer_score;
@@ -39,7 +34,7 @@ class cribbage {
         bool player2_ready;
         int wins[2];
 
-        int current_dealer;
+        int next_dealer;
 
         std::mt19937 gen;
         std::uniform_int_distribution<int> distrib;
@@ -61,8 +56,11 @@ class cribbage {
         player *current_player;
         hand crib;
         card cards_played[8];
+        card cards_played_since_new_stack[8];
         int num_cards_played = 0;
+        int num_cards_played_since_new_stack=0;
         int sum_cards = 0;
+        bool pone_to_play = true;
         bool pone_go = false;
         bool dealer_go = false;
 

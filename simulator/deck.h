@@ -30,3 +30,9 @@ class mock_deck : public deck {
         void shuffle() override;
         void set_top_13_cards(card* cards);
 };
+
+class internal_deck : public deck {
+    public:
+        internal_deck();
+        card *get_cards();
+};

@@ -7,6 +7,7 @@ set(HEARDER_FILES
     card.h
     cribbage.h
     deck.h
+    greedyplayer.h
     hand.h
     player.h
     scorer.h
@@ -18,6 +19,7 @@ set(source
     card.cpp
     cribbage.cpp
     deck.cpp
+    greedyplayer.cpp
     hand.cpp
     player.cpp
     scorer.cpp
