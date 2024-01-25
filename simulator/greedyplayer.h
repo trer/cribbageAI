@@ -19,6 +19,6 @@ class greedyplayer : public player{
         int* get_best_two_cards(card* hand_cards, int num_cards, bool is_dealer);
         int get_best_card(card* hand_cards, int num_cards, card* cards_played, int num_cards_played, int sum_cards);
 
-        action poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer);     
+        action poll_player(bool discard_phase, hand* p_hand, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer);     
 
 };

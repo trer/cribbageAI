@@ -1,5 +1,6 @@
 #pragma once
-#include "./hand.h"
+#include "hand.h"
+#include "utils.h"
 #include <iostream>
 #include <string>
 
@@ -47,6 +48,15 @@ void hand::draw(int num) {
     num_cards = num_cards + num;
 }
 
+void hand::remove_card(card * c1) {
+    for (int i = get_num_cards()-1; i >= 0; i--) {
+        if (compare_cards(&cards[i], c1)) {
+            remove_card(i);
+        }
+    }
+}
+
+
 void hand::remove_card(int pos) {
     /*
      * Removes the card at index pos in the cards array.
@@ -72,6 +82,14 @@ void hand::remove_2card(int pos1, int pos2) {
     } else {
         remove_card(pos1);
         remove_card(pos2);
+    }
+}
+
+void hand::remove_2card(card *c1, card *c2) {
+    for (int i = get_num_cards()-1; i >= 0; i--) {
+        if (compare_cards(&cards[i], c1) || compare_cards(&cards[i],c2)) {
+            remove_card(i);
+        }
     }
 }
 
@@ -101,6 +119,10 @@ card* hand::get_cards() {
 
 void hand::set_num_cards(int num) {
     num_cards = num;
+}
+
+int hand::get_num_cards() const {
+    return num_cards;
 }
 
 int hand::get_num_cards() {

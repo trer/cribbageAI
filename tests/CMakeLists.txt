@@ -9,6 +9,7 @@ enable_testing()
 set(sources
     utilstest.cpp
     cardtest.cpp
+    cheatingutcplayertest.cpp
     decktest.cpp
     greedyplayertest.cpp
     handtest.cpp

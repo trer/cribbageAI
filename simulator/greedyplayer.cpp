@@ -46,6 +46,9 @@ int greedyplayer::get_best_card(card* hand_cards, int num_cards, card* cards_pla
 
 
 int* greedyplayer::get_best_two_cards(card* hand_cards, int num_cards, bool is_dealer) {
+    /*
+     * If we get a SEH error here, that it is indeed play-phase
+    */
     double best_score = -1.0;
     card tmp_crib[3];
     card* tmp_cut;
@@ -104,7 +107,7 @@ action greedyplayer::discard_two_cards(bool is_dealer) {
     get_best_two_cards(player_hand->get_cards(), player_hand->get_num_cards(), is_dealer);
     c1 = *player_hand->get_card(best_cards_indexes[0]);
     c2 = *player_hand->get_card(best_cards_indexes[1]);
-    player_hand->remove_2card(best_cards_indexes[0], best_cards_indexes[1]);
+    // player_hand->remove_2card(best_cards_indexes[0], best_cards_indexes[1]);
 
     return action(&c1, &c2);    
 }
@@ -112,15 +115,16 @@ action greedyplayer::discard_two_cards(bool is_dealer) {
 action greedyplayer::play_a_card(card* cards_played, int num_cards_played, int sum_played_cards) {
     int index = get_best_card(player_hand->get_cards(), player_hand->get_num_cards(), cards_played, num_cards_played, sum_played_cards);
     c1 = *player_hand->get_card(index);
-    player_hand->remove_card(index);
+    // player_hand->remove_card(index);
     return action(&c1);
 }
 
 
-action greedyplayer::poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) {
+action greedyplayer::poll_player(bool discard_phase, hand* p_hand, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) {
     /*
      * Plays greedily
     */
+    set_hand(p_hand);
     if (discard_phase) {
         return discard_two_cards(is_dealer);
     }

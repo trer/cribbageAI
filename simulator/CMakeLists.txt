@@ -5,6 +5,7 @@ set(this CribbageAISimulator)
 set(HEARDER_FILES
     action.h
     card.h
+    cheatingutcplayer.h
     cribbage.h
     deck.h
     greedyplayer.h
@@ -17,6 +18,7 @@ set(HEARDER_FILES
 set(source
     action.cpp
     card.cpp
+    cheatingutcplayer.cpp
     cribbage.cpp
     deck.cpp
     greedyplayer.cpp

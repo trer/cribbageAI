@@ -5,7 +5,7 @@ namespace controller {
 
     game_controller::game_controller(int seed) {
         game = simulator::cribbage(seed);
-
+        std::cout << "created game" << std::endl;
 
     }
 
@@ -78,26 +78,11 @@ namespace controller {
     }
 
     int game_controller::get_current_player() {
-        player* cp = game.current_player;
-        if (cp == game.player1) {
-            return 1;
-        }
-        if (cp == game.player2) {
-            return 2;
-        }
-        return 0;
+        return game.get_current_player();
     }
 
     int game_controller::get_num_cards(int player) {
-        if (player == 1) {
-            return game.player1->get_hand()->get_num_cards();
-        } else if (player == 2) {
-            return game.player2->get_hand()->get_num_cards();
-        } else if (player == -1) {
-            return game.crib.get_num_cards();
-        }
-        
-        return -1;
+        return game.get_player_hand_size(player);
     }
 
     std::string game_controller::get_cut_card() {
@@ -123,13 +108,13 @@ namespace controller {
         if (player == 1) {
             d1 = tmp[index1];
             d2 = tmp[index2];
-            game.player1->get_hand()->remove_2card(index1, index2);
+            // game.get_player_hand(1)->remove_2card(index1, index2);
             discard_set_p1 = true;
             game.set_discard(action(&d1, &d2), player);
         } else if (player == 2) {
             d3 = tmp[index1];
             d4 = tmp[index2];
-            game.player2->get_hand()->remove_2card(index1, index2); //Does random automatically do this?
+            // game.get_player_hand(2)->remove_2card(index1, index2); //Does random automatically do this?
             discard_set_p2 = true;
             game.set_discard(action(&d3, &d4), player);
         }
@@ -144,7 +129,7 @@ namespace controller {
             } else {
                 hand* tmp = game.get_player_hand(player);
                 c = *tmp->get_card(index);
-                tmp->remove_card(index);
+                // tmp->remove_card(index);
                 game.set_play_action(action(&c));
                 
             }
@@ -179,10 +164,10 @@ namespace controller {
 
     bool game_controller::has_legal_move(int player) {
         if (player == 1) {
-            return exsists_legal_move(player1->get_hand()->get_cards(), player1->get_hand()->get_num_cards(), get_sum_cards_played());
+            return exsists_legal_move(game.get_player_hand(1)->get_cards(), game.get_player_hand_size(1), get_sum_cards_played());
         } else if (player == 2)
         {
-            return exsists_legal_move(player2->get_hand()->get_cards(), player2->get_hand()->get_num_cards(), get_sum_cards_played());
+            return exsists_legal_move(game.get_player_hand(2)->get_cards(), game.get_player_hand_size(2), get_sum_cards_played());
         }
         return false;   
     }
@@ -253,7 +238,7 @@ namespace controller {
                 discard_phase = true;
                 discard_set_p1 = true;
             }
-            opp_num_cards = player2->get_hand()->get_num_cards();
+            opp_num_cards = game.get_player_hand(2)->get_num_cards();
             score_self = game.player1_score;
             score_opp = game.player2_score;
 
@@ -265,7 +250,7 @@ namespace controller {
                 discard_phase = true;
                 discard_set_p2 = true;
             }
-            opp_num_cards = player1->get_hand()->get_num_cards();
+            opp_num_cards = game.get_player_hand(2)->get_num_cards();
             score_self = game.player2_score;
             score_opp = game.player1_score;
         }
@@ -275,7 +260,7 @@ namespace controller {
             return "";
         }
 
-        action a = player_to_poll->poll_player(discard_phase, game.cards_played, game.num_cards_played, game.sum_cards, opp_num_cards, score_self, score_opp, !game.pone_to_play);
+        action a = player_to_poll->poll_player(discard_phase, game.get_player_hand(p), game.cards_played, game.num_cards_played, game.sum_cards, opp_num_cards, score_self, score_opp, !game.pone_to_play);
         out_string = a.card1->string_format();
         if (discard_phase) {
             game.set_discard(a, p);

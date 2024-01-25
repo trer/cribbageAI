@@ -14,6 +14,7 @@ class deck {
     public:
         deck();
         deck(int seed);
+        deck(const deck &source);
         void set_seed(int seed);
         virtual void shuffle();
         card *deal_top();

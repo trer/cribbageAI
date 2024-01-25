@@ -280,6 +280,8 @@ class GamePage(Frame):
             self.next_round_label.bind("<Button-1>", lambda e: self.setup_next_game(game))
      
 
+
+
         self.p1_score_label.text = "Points: " + str(game.get_points(1))
         self.p1_score_label.configure(text = self.p1_score_label.text)
         self.p2_score_label.text = "Points: " + str(game.get_points(2))
@@ -314,6 +316,7 @@ class GamePage(Frame):
             pass
         else:
             self.reveal_crib(game)
+            print("revealing player cards")
             self.reveal_player_cards(game)
             
             
@@ -374,11 +377,14 @@ class GamePage(Frame):
     
     def reveal_player_cards(self, game):
         player_card_names = game.get_cards(1)[:4] + game.get_cards(2)[:4]
+        print("got player cardscards")
+        print("the cards are:", player_card_names)
         for name, card in zip(player_card_names, self.p1_cards_labels[:4]+self.p2_cards_labels[:4]):
                 # if card.name not in [c.name for c in self.crib_labels] and card.name != "not_set":
                 tmp = ImageTk.PhotoImage(Image.open("GUI/card_images/card_"+name+".png").resize((55, 85), Image.LANCZOS))
                 card.image = tmp
                 card.configure(image=card.image)
+                print("configured card")
 
     def setup_discard_phase(self, game):
         if self.discard_phase_already_setup:
@@ -460,7 +466,8 @@ def play(game):
         game_info_q.put(game)
         do_update.set()
      
-    time.sleep(0.01)
+    # time.sleep(0.01)
+    time.sleep(1)
 
 
 def run_app():
@@ -469,8 +476,11 @@ def run_app():
 
 def run_game_data():
     global stop_threads
+    print("creating game")
     game0 = Game(game_info_q, response_q, game_event)
+    print("setting up round")
     game0.setup_round()
+    print("ronud setup")
     game_info_q.put(game0)
     while not stop_threads:
         play(game0)

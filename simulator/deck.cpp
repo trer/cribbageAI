@@ -22,6 +22,19 @@ deck::deck(int inSeed): gen(inSeed), distrib(0, 51) {
     init();
 }
 
+deck::deck(const deck &source) {
+    seed = source.seed;
+    num_cards = source.num_cards;
+    for (int i = 0; i < 52; i++)
+    {
+        cards[i] = source.cards[i];
+    }
+    
+    cut_card = source.cut_card;
+    gen = source.gen;
+    distrib = source.distrib;
+}
+
 void deck::set_seed(int inSeed){
     seed = inSeed;
 }

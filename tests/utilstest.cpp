@@ -302,3 +302,69 @@ TEST(utils, check_valid_move_play_close_30) {
 }
 
 
+TEST(utils, update_legal_moves) {
+    
+    card cards_played[8];
+    card crib[5];
+    card player_hand[6];
+
+    bool discard_done = true;
+    int num_cards_played = 4;
+    int num_cards_in_player_hand = 2;
+    int sum_cards = 0;
+
+    //define player hand
+    player_hand[0] = card(10, 'H');
+    player_hand[1] = card(3, 'S');
+    player_hand[2] = card(11, 'H');
+    player_hand[3] = card(2, 'H');
+    player_hand[4] = card(1, 'D');
+    player_hand[5] = card(6, 'C');
+
+    //define crib
+    crib[0] = player_hand[4]; // card 5 in player hand
+    crib[1] = player_hand[5]; // card 6 in player hand
+    crib[2] = card(6, 'H');
+    crib[3] = card(6, 'D');
+    crib[4] = card(5, 'S'); //This is the cut card (though, I dont think it matters)
+
+    int num_cards_in_crib = 5;
+
+    //define played cards
+    cards_played[0] = card(3, 'H');
+    cards_played[1] = player_hand[3]; //2
+    cards_played[2] = card(12, 'S');
+    cards_played[3] = player_hand[2]; //10
+
+
+
+    for (int i = 0; i < num_cards_played; i++) {
+        sum_cards += cards_played[i].get_value(false);
+    }
+    int *avalable_actions[15];
+    int num_available_actions = update_legal_moves(avalable_actions, player_hand, num_cards_in_player_hand, sum_cards, discard_done);
+
+    GTEST_ASSERT_EQ(num_available_actions, 1);
+    GTEST_ASSERT_EQ(avalable_actions[0][0], 1);
+  
+
+
+    discard_done = false;
+    num_cards_played = 0;
+    num_cards_in_player_hand = 6;
+    sum_cards = 0;
+
+    //define player hand
+    player_hand[0] = card(10, 'H');
+    player_hand[1] = card(3, 'S');
+    player_hand[2] = card(11, 'H');
+    player_hand[3] = card(2, 'H');
+    player_hand[4] = card(1, 'D');
+    player_hand[5] = card(6, 'C');
+
+    num_available_actions = update_legal_moves(avalable_actions, player_hand, num_cards_in_player_hand, sum_cards, discard_done);
+
+    GTEST_ASSERT_EQ(num_available_actions, 15);
+    GTEST_ASSERT_EQ(avalable_actions[0][0], 0);
+  
+}

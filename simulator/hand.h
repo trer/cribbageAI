@@ -23,9 +23,12 @@ class hand {
         card *get_card(int pos);
         card *get_cards();
         void set_num_cards(int num);
+        int get_num_cards() const;
         int get_num_cards();
+        void remove_card(card *c1);
         void remove_card(int card_pos);
         void remove_2card(int card_pos, int card_pos2);
+        void remove_2card(card *c1, card *c2);
         void set_score(int set_score);
         int get_score();
         void print_hand();

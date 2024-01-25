@@ -54,7 +54,7 @@ action randomplayer::discard_two_random_cards() {
     c1 = *player_hand->get_card(pos1);
     c2 = *player_hand->get_card(pos2);
 
-    player_hand->remove_2card(pos1, pos2);
+    // player_hand->remove_2card(pos1, pos2);
 
     return action(&c1, &c2);
 }
@@ -69,17 +69,18 @@ action randomplayer::play_random_card() {
     for (int i=0; i<=num_cards; i++) {
         if (legal_moves[i]) {
             c1 = *player_hand->get_card(i);
-            player_hand->remove_card(i);
+            // player_hand->remove_card(i);
             return action(&c1);
         }
     }
     return action();
 }
 
-action randomplayer::poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) {
+action randomplayer::poll_player(bool discard_phase, hand *p_hand, card *cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) {
     /*
      * Plays more or less randomly
     */
+    set_hand(p_hand);
     if (discard_phase) {
         return discard_two_random_cards();
     }
@@ -100,7 +101,7 @@ action realplayer::discard_two_cards() {
     cin >> pos2;
     c1 = *player_hand->get_card(pos1);
     c2 = *player_hand->get_card(pos2);
-    player_hand->remove_2card(pos1, pos2);
+    // player_hand->remove_2card(pos1, pos2);
 
     return action(&c1, &c2);
 }
@@ -111,7 +112,7 @@ action realplayer::play_a_card(int sum_cards_played) {
         cout << "Give index of the card you want to play";
         cin >> pos;
         c1 = *player_hand->get_card(pos);
-        player_hand->remove_card(pos);
+        // player_hand->remove_card(pos);
 
         return action(&c1);
     }
@@ -122,8 +123,9 @@ realplayer::realplayer()
 {
 }
 
-action realplayer::poll_player(bool discard_phase, card *cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer)
+action realplayer::poll_player(bool discard_phase, hand *p_hand, card *cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer)
 {
+    set_hand(p_hand);
     cout << "Your score: " << score_self << " ";
     cout << "Opponent score: " << score_opp << " ";
     cout << "Discad Phase: " << discard_phase << endl;
@@ -152,20 +154,20 @@ mockplayer::mockplayer() {
     order;
 }
 
-action mockplayer::poll_player(bool discard_phase, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) {
+action mockplayer::poll_player(bool discard_phase, hand *p_hand, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) {
     action a;
     switch (count)
     {
     case 0:
         a = action(player_hand->get_card(order[count]), player_hand->get_card(order[count+1]));
-        player_hand->remove_2card(order[count], order[count+1]);
+        // player_hand->remove_2card(order[count], order[count+1]);
         count++;
         break;
     case -1:
         a = action();
     default:
         a = action(player_hand->get_card(order[count]));
-        player_hand->remove_card(order[count]);
+        // player_hand->remove_card(order[count]);
         break;
     }
 

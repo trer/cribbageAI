@@ -3,6 +3,7 @@
 
 #define CRIBBAGE_SUM_CEIL 31
 
+
 bool compare_cards(card* c1, card* c2) {
     int c1_value = c1->get_value(true);
     int c2_value = c2->get_value(true);
@@ -38,6 +39,31 @@ bool exsists_legal_move(card* hand_cards, int num_hand_cards, int sum_cards_play
         }
     }
     return is_legal_move;
+}
+
+int update_legal_moves(int** available_actions, card* hand_cards, int num_hand_cards, int sum_cards_played, bool discard_done) {
+    bool is_legal_move = false;
+    int num_available_actions = 0;
+    int offset = 0;
+    if (!discard_done) {
+        for (int i = 0; i < num_hand_cards; i++) {
+            for (int j = i+1; j < num_hand_cards; j++) {
+                available_actions[num_available_actions] = get_array(i, j);
+                num_available_actions++;
+            }
+        }
+        
+    } else {
+        for (int i=0; i<num_hand_cards; i++) {
+            if (hand_cards[i].get_value(false) + sum_cards_played <= CRIBBAGE_SUM_CEIL) {
+                available_actions[i-offset] = get_array(i);
+                num_available_actions++;
+            } else {
+                offset++;
+            }
+        }
+    }
+    return num_available_actions;
 }
 
 bool check_valid_move(bool discard_phase, card *cards_played, int num_cards_played, 
@@ -113,4 +139,102 @@ bool check_valid_move(bool discard_phase, card *cards_played, int num_cards_play
     }
     //If player tries to say go
     return !exsists_legal_move(player_hand, num_cards_in_player_hand, sum_cards);
+}
+
+
+
+int action0[1] = {0};
+int action1[1] = {1};
+int action2[1] = {2};
+int action3[1] = {3};
+int action01[2] = {0,1};
+int action02[2] = {0,2};
+int action03[2] = {0,3};
+int action04[2] = {0,4};
+int action05[2] = {0,5};
+int action12[2] = {1,2};
+int action13[2] = {1,3};
+int action14[2] = {1,4};
+int action15[2] = {1,5};
+int action23[2] = {2,3};
+int action24[2] = {2,4};
+int action25[2] = {2,5};
+int action34[2] = {3,4};
+int action35[2] = {3,5};
+int action45[2] = {4,5};
+
+int* get_array(int i) {
+    switch (i)
+    {
+    case 0:
+        return action0;
+    case 1:
+        return action1;
+    case 2:
+        return action2;
+    case 3:
+        return action3;
+    default:
+        std::cout << "arrays not behaving properly, play" << std::endl;
+        return action0;
+    }
+}
+
+
+int* get_array(int i, int j) {
+    switch (i)
+    {
+    case 0:
+        switch (j)
+        {
+        case 1:
+            return action01;
+        case 2:
+            return action02;
+        case 3:
+            return action03;
+        case 4:
+            return action04;
+        case 5:
+            return action05;
+        }
+        break;
+    case 1:
+        switch (j)
+        {
+        case 2:
+            return action12;
+        case 3:
+            return action13;
+        case 4:
+            return action14;
+        case 5:
+            return action15;
+        }
+        break;
+    case 2:
+        switch (j)
+        {
+        case 3:
+            return action23;
+        case 4:
+            return action24;
+        case 5:
+            return action25;
+        }
+        break;
+    case 3:
+        switch (j)
+        {
+        case 4:
+            return action34;
+        case 5:
+            return action35;
+        }
+        break;
+    case 4:
+        return action45;
+    }
+    std::cout << "arrays not behaving properly, discard" << std::endl;
+    return action0;
 }

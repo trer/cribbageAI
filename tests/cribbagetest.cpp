@@ -1,7 +1,8 @@
 #pragma once
 #include <gtest/gtest.h>
-#include ".././simulator/cribbage.h"
-#include ".././simulator/player.h"
+#include "../simulator/cribbage.h"
+#include "../simulator/player.h"
+#include "../simulator/greedyplayer.h"
 
 TEST(cribbage, test_mocks) {
     
@@ -280,6 +281,84 @@ TEST(cribbage, endgame_test) {
     GTEST_ASSERT_EQ(game.get_player1_score(), 124);
     GTEST_ASSERT_EQ(game.get_player2_score(), 114+1);
     
+}
 
+
+
+TEST(cribbage, copy_test) {
+
+    
+    greedyplayer p1 = greedyplayer();
+    greedyplayer p2 = greedyplayer();
+    simulator::cribbage game = simulator::cribbage(1, &p1, &p2, 1);
+    game.setup_round();
+
+    simulator::cribbage copy = game;
+    GTEST_ASSERT_EQ(game.discard_done(), copy.discard_done());
+
+    simulator::cribbage cp1;
+    cp1 = simulator::cribbage(1);
+
+    GTEST_ASSERT_NE(game.discard_done(), cp1.discard_done());  
+    int num_copies = 1;
+    
+    simulator::cribbage *start_copy[20];
+    simulator::cribbage *past_copy[20];
+    start_copy[0] = &game;
+    past_copy[0] = &game;
+    int rounds_counter = 0;
+    int win = 0;
+
+    while (!win) {
+        //copy state of first game
+        start_copy[num_copies] = new simulator::cribbage(game);
+        //copy state of last game (should be the same state as the first game, but different memory locations)
+        past_copy[num_copies] = new simulator::cribbage(*past_copy[num_copies-1]);
+        num_copies++;
+
+        //advance all games 1 step forward
+        game.round();
+        for (int i = 1; i < num_copies; i++)
+        {
+            win = start_copy[i]->round();
+            past_copy[i]->round();
+
+            // assert that the result is the for all games (implying that the internal gamestate is the same)
+            GTEST_ASSERT_EQ(start_copy[i]->get_player1_score(), game.get_player1_score()) << "i is: " << i << ", round is: " << rounds_counter;
+            GTEST_ASSERT_EQ(start_copy[i]->get_player2_score(), game.get_player2_score());
+            GTEST_ASSERT_EQ(past_copy[i]->get_player1_score(), game.get_player1_score()) << "i is: " << i << ", round is: " << rounds_counter;
+            GTEST_ASSERT_EQ(past_copy[i]->get_player2_score(), game.get_player2_score());
+        }
+        rounds_counter++;
+    }
+
+    game = simulator::cribbage(1, &p1, &p2, 1);
+
+    game.setup_round();
+    game.set_discard(p1.poll_player(true, game.get_player_hand(1), game.cards_played, game.num_cards_played, game.sum_cards, game.get_player_hand(2)->get_num_cards(), game.player1_score, game.player2_score, !game.pone_to_play), 1);
+    game.set_discard(p2.poll_player(true, game.get_player_hand(2), game.cards_played, game.num_cards_played, game.sum_cards, game.get_player_hand(1)->get_num_cards(), game.player2_score, game.player1_score, !game.pone_to_play), 2);
+    game.handle_discards();
+    game.setup_play_phase();
+
+    simulator::cribbage g2 = simulator::cribbage(game);
+    game.set_current_player();
+    game.set_play_action(p2.poll_player(false, game.get_player_hand(2), game.cards_played, game.num_cards_played, game.sum_cards, game.get_player_hand(1)->get_num_cards(), game.player2_score, game.player1_score, !game.pone_to_play));
+    game.resolve_action();
+    
+    g2.set_current_player();
+    g2.set_play_action(p2.poll_player(false, g2.get_player_hand(2), g2.cards_played, g2.num_cards_played, g2.sum_cards, g2.pone_hand.get_num_cards(), g2.player2_score, g2.player1_score, !g2.pone_to_play));
+    g2.resolve_action();
+
+    GTEST_ASSERT_EQ(g2.get_player_hand_size(1), game.get_player_hand_size(1));
+    for (int i = 0; i < g2.get_player_hand_size(1); i++)
+    {
+        GTEST_ASSERT_TRUE(compare_cards(g2.get_player_hand(1)->get_card(i), game.get_player_hand(1)->get_card(i)));
+    }
+    
+    GTEST_ASSERT_EQ(g2.get_player_hand_size(2), game.get_player_hand_size(2));
+    for (int i = 0; i < g2.get_player_hand_size(2); i++)
+    {
+        GTEST_ASSERT_TRUE(compare_cards(g2.get_player_hand(2)->get_card(i), game.get_player_hand(2)->get_card(i)));
+    }
 
 }

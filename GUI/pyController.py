@@ -5,7 +5,9 @@ class Game():
 
     def __init__(self, game_info_q, response_q, game_event):
         self.acting_player = 1
+        print("creating controller")
         self.cribbage_simulator = gui_bind.controller()
+        print("created")
         self.set_queues_and_events(game_info_q, response_q, game_event)
         self.setup = self.ask_app("Start Game?")
 
@@ -28,7 +30,9 @@ class Game():
         if self.phase == "discard_phase":
             if not self.p1_discard_done:
                 if len(self.p1_action) == 2:
+                    print("discaring cards for p1")
                     self.discard_cards(1, self.p1_action)
+                    print("successfully discarded cards")
                     answer = "discard cards for p1"
                 elif self.p1 != 'h':
                     self.p1_discard_done = True # not needed i think
@@ -53,6 +57,7 @@ class Game():
         elif self.phase == "play_phase":
             if self.cribbage_simulator.get_num_cards(1) == 0 and self.cribbage_simulator.get_num_cards(2) == 0:
                 self.clear_actions() #remove discard actions
+                self.cribbage_simulator.matching_setup()
                 self.phase = "matching_phase"
                 answer = "moving to matching phase"
             elif not self.cribbage_simulator.has_called_go(1) and not self.cribbage_simulator.has_called_go(2) and self.go_called:
@@ -83,6 +88,7 @@ class Game():
                 
 
             elif self.cribbage_simulator.get_current_player() == 2:
+                print("simulator thinks that player 2 has a legal move:", self.cribbage_simulator.has_legal_move(2))
                 if not self.cribbage_simulator.has_legal_move(2):
                     self.call_go_action(2)
                     self.play_card(2, self.p2_action) #empty list
@@ -92,6 +98,7 @@ class Game():
                     self.play_card(2, self.p2_action)
                     answer = "player 2 playing card"
                 elif self.p2 != 'h':
+                    print("player 2 tries to play automatic")
                     out_string = self.cribbage_simulator.poll_player(2)
                     out_string = out_string.split(" ")
                     win = int(out_string[-1])
@@ -104,7 +111,6 @@ class Game():
 
         elif self.phase == "matching_phase":
             if not self.pone_has_matched_points:
-                self.cribbage_simulator.matching_setup()
                 win = self.cribbage_simulator.matching_score_pone()
                 answer = "points given to pone"
                 self.pone_has_matched_points = True
@@ -127,7 +133,9 @@ class Game():
     
     def get_cards(self, player):
         cards = []
+        print("trying to get the cards")
         num_cards = self.cribbage_simulator.get_num_cards(player)
+        print("got the cards")
         for i in range(num_cards):
             cards.append(self.cribbage_simulator.get_card(i, player))
         return cards
@@ -173,6 +181,7 @@ class Game():
         self.cribbage_simulator.discard_action(player, index0, index1)
 
         handled_discards = self.handle_discards() 
+        print("discard_internal_done")
                 
         if player == 1:
             self.p1_discard_done = True
@@ -182,8 +191,11 @@ class Game():
     
     def handle_discards(self):
         if self.cribbage_simulator.discard_set():
+            print("trying to handle discards")
             win = self.cribbage_simulator.handle_discards()
+            print("handled discards!")
             self.cards_to_place_in_crib = self.get_cards(-1)
+            print("cards to place in crib is set")
             
             if win != 0:
                 self.game_cleanup(win)
