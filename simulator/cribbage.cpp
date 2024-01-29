@@ -2,6 +2,7 @@
 #include "cribbage.h"
 
 #define SCORE_TO_WIN 121
+#define NUM_CARDS_IN_HAND 6
 
 using namespace std;
 
@@ -363,7 +364,9 @@ void cribbage::set_discard(action a, char player) {
         dealer_discard = a;
         dealer_discard_done = true;
         pone_to_play = true; //at the end of discard it should always be pone to play
-        set_current_player();
+        if (!pone_discard_done) {
+            set_current_player();
+        }
     } else if (player == 'p') {
         pone_discards = a;
         pone_discard_done = true;
@@ -405,11 +408,12 @@ void cribbage::resolve_action() {
     if (acting_player_action.card1 != 0) {
         cards_played[num_cards_played] = *acting_player_action.card1;
         cards_played_since_new_stack[num_cards_played_since_new_stack] = *acting_player_action.card1;
-        current_hand->remove_card(acting_player_action.card1);
         num_cards_played++;
         num_cards_played_since_new_stack++;
         sum_cards = sum_cards + acting_player_action.card1->get_value(false);
         *current_player_score = *current_player_score + score_played_card(cards_played_since_new_stack, num_cards_played_since_new_stack, acting_player_action.card1, sum_cards);
+        //once we are done with the card we can remove it
+        current_hand->remove_card(acting_player_action.card1);
     } else {
         //otherwise check if the other player has already called go
         if (pone_to_play) {
@@ -565,6 +569,7 @@ int cribbage::handle_discards() {
     crib_cards[3] = *pone_discards.card2;
 
     crib = hand(game_deck, crib_cards, 4);
+    //once we are done with everything else we can remove the cards
     dealer_hand.remove_2card(dealer_discard.card1, dealer_discard.card2);
     pone_hand.remove_2card(pone_discards.card1, pone_discards.card2);
     
@@ -647,13 +652,12 @@ int cribbage::apply_action_from_list(int action_index) {
             return win;
         }
         // Currently doing that in is_round_done();
-        
-        //setup next turn
-        set_current_player();
-        //if a player has no available moves he must call go (I want to do this automatically)
-        if (get_num_available_actions() == 0 && !is_round_done()) {
-            apply_action_from_list(-1);
-        }
+    }
+    //setup next turn
+    set_current_player();
+    //if a player has no available moves he must call go (I want to do this automatically)
+    if (get_num_available_actions() == 0 && !is_round_done()) {
+        win = apply_action_from_list(-1);
     }
     return win;
 }
@@ -681,6 +685,29 @@ void cribbage::randomize(int player){
    // Player hands has to be updated?) 
    // Old Copy should not change as we do these changes
    // Not all gamestates are as likely (eg. the opponent is more likely to keep certain cards over others)
+}
+
+
+std::string cribbage::get_informationstate_string(int player) {
+    int n = get_player_hand_size(player);
+    int* card_ranks = new int[n];
+    for (int i = 0; i < n; i++) {
+        card_ranks[i] = get_player_hand(player)->get_card(i)->get_value(true);
+    }
+    sort(card_ranks, card_ranks + n);
+
+    std::string result = "";
+    for (int i = 0; i < n; i++){
+        result.append(to_string(card_ranks[i]) + "_");
+    }
+    
+    result.append("|");
+
+    for (int i = 0; i < num_cards_played_since_new_stack; i++) {
+        result.append(to_string(cards_played_since_new_stack[i].get_value(true)) + "_");
+    }
+    
+    return result;
 }
 
 }

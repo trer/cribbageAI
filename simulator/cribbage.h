@@ -33,9 +33,6 @@ class cribbage {
 
         int next_dealer;
 
-        int num_available_actions;
-        int available_actions_indexes[15] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
-        int* available_actions[15];
         bool round_done = false;
         bool round_setup_once = false;
 
@@ -74,6 +71,11 @@ class cribbage {
 
         int player1_score;
         int player2_score;
+
+        
+        int num_available_actions;
+        int available_actions_indexes[15] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+        int* available_actions[15];
     
         int check_win();
         void swap_dealer();
@@ -121,6 +123,8 @@ class cribbage {
         int get_point_diff(int player);
 
         void randomize(int player);
+
+        std::string get_informationstate_string(int player);
 };
 
 };

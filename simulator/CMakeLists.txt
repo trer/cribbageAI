@@ -10,6 +10,7 @@ set(HEARDER_FILES
     deck.h
     greedyplayer.h
     hand.h
+    mccfrplayer.h
     player.h
     scorer.h
     utils.h
@@ -23,6 +24,7 @@ set(source
     deck.cpp
     greedyplayer.cpp
     hand.cpp
+    mccfrplayer.cpp
     player.cpp
     scorer.cpp
     utils.cpp

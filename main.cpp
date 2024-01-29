@@ -13,7 +13,7 @@ int main(int argc, char const *argv[])
     randomplayer p1 = randomplayer();
     greedyplayer p2 = greedyplayer();
     simulator::cribbage game = simulator::cribbage(2, &p1, &p2);
-    int num_games = 100 000;
+    int num_games = 100000;
     int counter = 0;
     
     auto start = std::chrono::high_resolution_clock::now();
