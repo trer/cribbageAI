@@ -42,6 +42,67 @@ std::vector<double> policy::action_probabilities(simulator::cribbage* state, int
     return infostates[info_state_key];
 }
 
+void policy::serialize(std::string filepath) {
+    std::ofstream file;
+    file.open(filepath, std::ios::binary | std::ios::out);
+    if (file.is_open()) {
+        size_t length = infostates.size();
+        size_t str_length;
+        size_t vec_length;
+        file.write(reinterpret_cast<char*>(&length), sizeof(length));
+        for(auto it : infostates) {
+            str_length = it.first.length();
+            file.write(reinterpret_cast<char*>(&str_length), sizeof(str_length));
+            file.write( it.first.c_str(), str_length);
+            vec_length = it.second.size();
+            file.write(reinterpret_cast<char*>(&vec_length), sizeof(vec_length));
+            file.write(reinterpret_cast<char*>(&it.second[0]), vec_length * sizeof(double));
+        }
+        
+        file.close();
+    }
+}
+
+void policy::deserialize(std::string filepath) {
+    std::ifstream file;
+    file.open(filepath, std::ios::binary | std::ios::out);
+    if (file.is_open()) {
+        size_t length;
+        
+        
+
+        file.read(reinterpret_cast<char*>(&length), sizeof length);
+
+        for (int i = 0; i < length; i++) {
+            size_t str_length;
+            size_t vec_length;
+            char* tmp_key;
+            std::string tmp_key2;
+            file.read(reinterpret_cast<char*>(&str_length), sizeof(str_length));
+            tmp_key = new char[str_length+1];
+            file.read(reinterpret_cast<char*>(&tmp_key[0]), str_length);
+            tmp_key[str_length] = '\0';
+            tmp_key2 = tmp_key;
+            file.read(reinterpret_cast<char*>(&vec_length), sizeof(vec_length));
+            infostates[tmp_key2] = std::vector<double>(vec_length);
+            file.read(reinterpret_cast<char*>( &infostates[tmp_key2][0]), vec_length * sizeof(double));
+        }
+        
+
+        // infostates["4_2_|"] = std::vector<double>(6);
+        // infostates["4_1_|"] = std::vector<double>(6);
+
+        // file.read(reinterpret_cast<char*>( &infostates["4_2_|"][0]), sizeof infostates["4_2_|"]);
+        // infostates["4_2_|"].shrink_to_fit();
+
+        // file.read(reinterpret_cast<char*>( &infostates["4_1_|"][0]), sizeof infostates["4_1_|"]);
+        // infostates["4_2_|"].shrink_to_fit();
+
+        file.close();
+    }
+}
+ 
+
 mccfrplayer::mccfrplayer() {
     init();
 }
@@ -94,9 +155,9 @@ std::vector<double>* mccfrplayer::lookup_infostate_info(std::string some_sort_of
     return infostates[some_sort_of_key];
 }
 
-double mccfrplayer::episode(simulator::cribbage *state, int update_player, double player_reach, double opp_reach, double chance_reach) {
+double mccfrplayer::episode(simulator::cribbage *state, int update_player, double player_reach, double opp_reach, double chance_reach, int start_point_diff) {
     if (state->is_round_done()) {
-        return state->get_point_diff(update_player); //simulator expects player 1 or 2
+        return state->get_point_diff(update_player) - start_point_diff; //simulator expects player 1 or 2
     }
 
     // if (state.is_chance_node()) {
@@ -110,33 +171,8 @@ double mccfrplayer::episode(simulator::cribbage *state, int update_player, doubl
     std::string info_state_key = state->get_informationstate_string(current_player);
     int* legal_actions = state->get_available_actions();
     int num_available_actions = state->get_num_available_actions();
-    // bool in_info = infostates.find(info_state_key) == infostates.end();
-    // if (info_state_key == "1_12_|3_6_6_3_") {
-    //     std::cout << "nice, stop there" << std::endl;
-    // }
+
     std::vector<double>* infostate_info = lookup_infostate_info(info_state_key, num_available_actions);
-
-    // int num_available_actions2 = update_legal_moves(state->available_actions, state->current_hand->get_cards(), state->current_hand->get_num_cards(), state->sum_cards, state->discard_done());
-
-    // if (num_available_actions != num_available_actions2) {
-    //     std::cout << "error 4" << std::endl;
-    // }
-
-    // std::string ss = info_state_key;
-    // std::string::size_type pos = ss.find('|');
-    // std::string s = ss.substr(0, pos);
-    // int num1 = std::count(s.begin(), s.end(), '_');
-    // int num2 = infostate_info->size();
-    // if (num1 == 6 && num2 != 15) {
-    //     std::cout << "error typ1" << std::endl; 
-    // } else if (num1 != num2 && num2 != 15) {
-    //     if (num_available_actions2 != num2) {
-    //         std::cout << "error typ3" << std::endl; 
-    //     }
-    //     if (num_available_actions != num2) {
-    //         std::cout << "error typ3" << std::endl; 
-    //     }
-    // }
 
     double* policy = new double[num_available_actions];
     regret_matching(policy, infostate_info[REGRET_INDEX], num_available_actions);
@@ -168,7 +204,7 @@ double mccfrplayer::episode(simulator::cribbage *state, int update_player, doubl
     }
     double new_chance_reach = sample_strategy[sampled_action_index];
 
-    double child_value = episode(state, update_player, new_player_reach, new_opp_reach, new_chance_reach);
+    double child_value = episode(state, update_player, new_player_reach, new_opp_reach, new_chance_reach, start_point_diff);
 
     double* child_values = new double[num_available_actions];
     for (int i = 0; i < num_available_actions; i++) {
@@ -246,9 +282,11 @@ double mccfrplayer::update_regrets(node* state, int player) {
 
 void mccfrplayer::iteration() {
     for (int update_player = 1; update_player < num_players+1; update_player++) {
+        int negate = -(2*(update_player-1)-1); // if player 1 = 1, if player 2 = -1
         game->reset();
         game->setup_round();
-        episode(game, update_player, 1.0, 1.0, 1.0); //update chance_reach to be correct (maybe it is fine as long as the chance-reach-weight is the same)
+        game->skip_to_play_phase();
+        episode(game, update_player, 1.0, 1.0, 1.0, negate * (game->get_player1_score() - game->get_player2_score())); //update chance_reach to be correct (maybe it is fine as long as the chance-reach-weight is the same)
     }
 }
 

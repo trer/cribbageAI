@@ -17,7 +17,7 @@ TEST(mccfrplayer, run_test) {
     std::unordered_map<std::string, std::vector<double>*>* infostates = mccfr.get_infostates();
 
     for (int i = 0; i < 10000; i++){
-        mccfr.iteration(); //SEH exception somewhere (crashes program after like 5 turns :)
+        mccfr.iteration();
     }
     
     
@@ -27,7 +27,7 @@ TEST(mccfrplayer, run_test) {
     policy* p = mccfr.average_policy();
 
     while (!game.is_round_done()) {
-        std::vector<double> ac = p->action_probabilities(&game, 1);
+        std::vector<double> ac = p->action_probabilities(&game, game.get_current_player());
         std::discrete_distribution<int> d(ac.begin(), ac.end());
         
         std::cout << "Current player is: " << game.get_current_player() << std::endl;
@@ -42,9 +42,80 @@ TEST(mccfrplayer, run_test) {
         game.apply_action_from_list(sampled_action_index);
         
     }
+
+    for (int i = 0; i < 100; i++) {
+        game.reset();
+        game.setup_round();
+        std::vector<double> ac = p->action_probabilities(&game, 1);
+        for (auto prob : ac) {
+            GTEST_ASSERT_EQ(prob, 1.0/15);
+        }
+        
+    } 
+    std::string filename = "mcf_runtest.bin";
+    std::chrono::steady_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    p->serialize(filename);
+    std::chrono::steady_clock::time_point saved = std::chrono::high_resolution_clock::now();
     
     
+    policy loaded_policy = policy();
+    loaded_policy.deserialize(filename);
+    std::chrono::steady_clock::time_point loaded = std::chrono::high_resolution_clock::now();
+    auto save_duration = std::chrono::duration_cast<std::chrono::milliseconds>(saved - start_time);
+    auto load_duration = std::chrono::duration_cast<std::chrono::milliseconds>(loaded - saved);
+    std::cout << "Time to save is: " << save_duration.count() << " milliseconds." << std::endl;
+    std::cout << "Time to load is: " << load_duration.count() << " milliseconds." << std::endl;
+
+    GTEST_ASSERT_LT(load_duration.count() / loaded_policy.infostates.size(), 1.0/100);
     
+    //assert that the loaded action probabilities are the same as the saved ones
+    for (int i = 0; i < 100; i++) {
+        game.reset();
+        game.setup_round();
+        while (!game.is_round_done())
+        {
+            std::vector<double> ac1 = p->action_probabilities(&game, 1);
+            std::vector<double> ac2 = loaded_policy.action_probabilities(&game, 1);
+            for(int i=0; i < ac1.size(); i++) {
+                GTEST_ASSERT_EQ(ac1[i], ac2[i]);
+            }
+            std::discrete_distribution<int> d(ac2.begin(), ac2.end());
+            int sampled_action_index = d(gen); // replace with mersene twister
+            game.apply_action_from_list(sampled_action_index);
+        }
+        
+        
+        
+    } 
+
+
+
+}
+
+
+TEST(mccfrplayer, policy_serialize) {
+
+    policy p = policy();
+    std::string filename = "test.bin";
+
+    p.infostates["4_2_|"] = std::vector<double>();
+    p.infostates["4_2_|"].push_back(4.2);
+    p.infostates["4_2_|"].push_back(4.3);
     
+    p.infostates["4_1_|"] = std::vector<double>();
+    p.infostates["4_1_|"].push_back(3.2);
+    p.infostates["4_1_|"].push_back(3.3);
+
+    p.serialize(filename);
+
+    policy p2 = policy();
+
+    p2.deserialize(filename);
+
+    GTEST_ASSERT_EQ(p2.infostates["4_2_|"][0], 4.2);
+    GTEST_ASSERT_EQ(p2.infostates["4_2_|"][1], 4.3);
+
+    GTEST_ASSERT_EQ(p2.infostates["4_1_|"][0], 3.2);
+    GTEST_ASSERT_EQ(p2.infostates["4_1_|"][1], 3.3);
     
 }

@@ -106,10 +106,12 @@ node* cheatingutcplayer::tree_policy(node* n) {
 }
 
 node *cheatingutcplayer::expand(node *n) {
-    int* moves = n->get_state()->get_available_actions();
-    int action = moves[n->get_num_children()];
+    int action = n->get_num_children(); 
     node* new_node = n->add_child(new node(simulator::cribbage(*n->get_state()), action, n));
-    new_node->get_state()->apply_action_from_list(action);
+    int win = new_node->get_state()->apply_action_from_list(action);
+    if (win == -99) {
+        std::cout << "did an illigal move" << std::endl;
+    }
     //check for fully expanded
     if (n->get_num_children() == n->get_state()->get_num_available_actions()) {
         n->set_fully_expanded();
@@ -123,16 +125,20 @@ double* cheatingutcplayer::default_policy(simulator::cribbage *state) {
     int* moves;
     int num_available_actions;
     int index;
-    while (!state->is_round_done()) {
+    int win = 0;
+    while (!state->is_round_done() && win != -99) {
         num_available_actions = state->get_num_available_actions();
-        moves = state->get_available_actions();
         if (num_available_actions > 1) {
             std::uniform_int_distribution<int> distrib(0, state->get_num_available_actions()-1);
             index = distrib(*gen);
         } else {
             index = 0;
         }
-        state->apply_action_from_list(moves[index]);
+        win = state->apply_action_from_list(index);
+        if (win == -99) {
+        std::cout << "did an illigal move: default policy" << std::endl;
+        }
+
     }
     rewards[0] = state->get_point_diff(1);
     rewards[1] = state->get_point_diff(2);

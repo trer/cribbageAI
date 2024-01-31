@@ -57,8 +57,6 @@ void cribbage::copy_self(const cribbage &source) {
     }
     
     
-
-
     if (source.round_setup_once) {
         round_setup_once = source.round_setup_once;
         player1_score = source.player1_score;
@@ -238,7 +236,7 @@ void cribbage::set_current_player() {
         current_opp_hand = &dealer_hand;
         current_player_score = pone_score;
         current_opp_score = dealer_score;
-        num_available_actions = update_legal_moves(available_actions, pone_hand.get_cards(), pone_hand.get_num_cards(), sum_cards, discard_done());
+        num_available_actions = update_legal_moves(available_actions, available_actions_indexes, pone_hand.get_cards(), pone_hand.get_num_cards(), sum_cards, discard_done());
     } else {
         current_player = dealer;
         current_opp = pone;
@@ -246,7 +244,7 @@ void cribbage::set_current_player() {
         current_opp_hand = &pone_hand;
         current_player_score = dealer_score;
         current_opp_score = pone_score;
-        num_available_actions = update_legal_moves(available_actions, dealer_hand.get_cards(), dealer_hand.get_num_cards(), sum_cards, discard_done());
+        num_available_actions = update_legal_moves(available_actions, available_actions_indexes, dealer_hand.get_cards(), dealer_hand.get_num_cards(), sum_cards, discard_done());
     }
 }
 
@@ -551,6 +549,20 @@ void cribbage::setup_round() {
     set_current_player();
 }
 
+void cribbage::skip_to_play_phase(player* discard_policy) {
+    if (discard_policy == nullptr) {
+        //if no policy is given fall back to players.
+        set_discard(pone->poll_player(true, &pone_hand, 0, 0, 0, 6, *pone_score, *dealer_score, false), 'p');
+        set_discard(dealer->poll_player(true, &dealer_hand, 0, 0, 0, 6, *dealer_score, *pone_score, true), 'd');
+        int discard_winner = handle_discards(); //points are awarded!
+    } else {
+        //use the policy to handle discards
+    }
+
+    set_current_player();
+}
+
+
 int cribbage::handle_discards() {
     
 
@@ -580,7 +592,7 @@ int cribbage::handle_discards() {
     crib.draw_cut();
 
     *dealer_score = *dealer_score + score_cut(game_deck->cut());
-    num_available_actions = update_legal_moves(available_actions, pone_hand.get_cards(), pone_hand.get_num_cards(), sum_cards, true);
+    num_available_actions = update_legal_moves(available_actions, available_actions_indexes, pone_hand.get_cards(), pone_hand.get_num_cards(), sum_cards, true);
     if (check_win()) {
         return check_win();
     }
@@ -616,7 +628,7 @@ bool cribbage::discard_done() {
 
 bool cribbage::is_round_done() {
     /* 
-     * When checkning if the round is done wealso have to
+     * When checkning if the round is done we also have to
      * account for the fact that the game might be over.
      */
     return round_done || check_win();
@@ -631,9 +643,22 @@ int* cribbage::get_available_actions() {
 }
 
 int cribbage::apply_action_from_list(int action_index) {
+    /*
+     * Applies an action from available_actions. 
+     * -1 means calling go (this is done automatically)
+     * 0 plays the lowest card in hand
+     * 1 playes the second lowest card in hand (und so weiter...)
+     * Part of the tree-search algorithms, together with with setup_round() and matching()
+     *  
+    */
     int win = 0;
+    if (action_index < -1 || action_index >= num_available_actions) {
+        //If chosen action is not a legal action return -99 and change no internal states.
+        //This could cause recursion
+        return -99;
+    }
     if (!discard_done()) {
-        set_discard(action(current_hand->get_card(available_actions[action_index][0]), current_hand->get_card(available_actions[action_index][1])));
+        set_discard(action(current_hand->get_card(available_actions_indexes[available_actions[action_index][0]]), current_hand->get_card(available_actions_indexes[available_actions[action_index][1]])));
         if (discard_done()) {
             handle_discards();
         }
@@ -641,7 +666,7 @@ int cribbage::apply_action_from_list(int action_index) {
         if (action_index == -1) {
             set_play_action(action());
         } else {
-            set_play_action(action(current_hand->get_card(available_actions[action_index][0])));
+            set_play_action(action(current_hand->get_card(available_actions_indexes[available_actions[action_index][0]])));
         }
         resolve_action();
         if (get_player_hand_size(1) == 0 && get_player_hand_size(2) == 0) {

@@ -4,6 +4,8 @@
 #include <chrono>
 #include <cmath>
 #include <forward_list>
+#include <fstream>
+#include <iostream>
 #include <iterator>
 #include <random>
 #include <string>
@@ -19,14 +21,20 @@
 
 class policy {
     private:
-        std::unordered_map<std::string, std::vector<double>> infostates;
 
     public:
+    
+        std::unordered_map<std::string, std::vector<double>> infostates;
+
+        
         policy();
         policy(std::unordered_map<std::string, std::vector<double>*> cfr_infostates, int index);
         policy(std::unordered_map<std::string, std::vector<double>> in_infostates);
 
         std::vector<double> action_probabilities(simulator::cribbage* state, int player);
+
+        void serialize(std::string filepath);
+        void deserialize(std::string filepath);
 };
 
 class mccfrplayer {
@@ -47,7 +55,7 @@ class mccfrplayer {
         void add_regret(std::string some_sort_of_key, int idx, double regret);
         void add_avg_strategy(std::string some_sort_of_key, int idx, double increment);
         std::vector<double>* lookup_infostate_info(std::string some_sort_of_key, int num_available_actions);
-        double episode(simulator::cribbage *state, int update_player, double player_reach, double opp_reach, double chance_reach);
+        double episode(simulator::cribbage *state, int update_player, double player_reach, double opp_reach, double chance_reach, int start_point_diff);
         double* regret_matching(double* p, std::vector<double>& regrets, int num_legal_actions);
         double baseline_corrected_child_value(double child_value, int action_index, int sampled_action_index, double sample_probability);
 

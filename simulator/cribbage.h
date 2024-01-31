@@ -2,6 +2,7 @@
 #include "./card.h"
 #include "./deck.h"
 #include "./hand.h"
+// #include "./mccfrplayer.h"
 #include "./player.h"
 #include "./scorer.h"
 #include"./utils.h"
@@ -85,6 +86,7 @@ class cribbage {
         void last_card_played();
         void reset(int first_dealer=0);
         void setup_round();
+        void skip_to_play_phase(player* discard_policy=nullptr);
         int handle_discards();
         void matching_setup();
         int matching_score_pone();

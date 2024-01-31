@@ -342,7 +342,8 @@ TEST(utils, update_legal_moves) {
         sum_cards += cards_played[i].get_value(false);
     }
     int *avalable_actions[15];
-    int num_available_actions = update_legal_moves(avalable_actions, player_hand, num_cards_in_player_hand, sum_cards, discard_done);
+    int indexes[6];
+    int num_available_actions = update_legal_moves(avalable_actions, indexes, player_hand, num_cards_in_player_hand, sum_cards, discard_done);
 
     GTEST_ASSERT_EQ(num_available_actions, 1);
     GTEST_ASSERT_EQ(avalable_actions[0][0], 1);
@@ -362,9 +363,17 @@ TEST(utils, update_legal_moves) {
     player_hand[4] = card(1, 'D');
     player_hand[5] = card(6, 'C');
 
-    num_available_actions = update_legal_moves(avalable_actions, player_hand, num_cards_in_player_hand, sum_cards, discard_done);
+    num_available_actions = update_legal_moves(avalable_actions, indexes, player_hand, num_cards_in_player_hand, sum_cards, discard_done);
 
     GTEST_ASSERT_EQ(num_available_actions, 15);
     GTEST_ASSERT_EQ(avalable_actions[0][0], 0);
+    GTEST_ASSERT_EQ(indexes[0], 4);
+
+    GTEST_ASSERT_EQ(player_hand[indexes[avalable_actions[0][0]]].get_value(true), 1);
+    GTEST_ASSERT_EQ(player_hand[indexes[avalable_actions[0][1]]].get_value(true), 2);
+    GTEST_ASSERT_EQ(player_hand[indexes[avalable_actions[1][0]]].get_value(true), 1);
+    GTEST_ASSERT_EQ(player_hand[indexes[avalable_actions[1][1]]].get_value(true), 3);
+    GTEST_ASSERT_EQ(player_hand[indexes[avalable_actions[2][0]]].get_value(true), 1);
+    GTEST_ASSERT_EQ(player_hand[indexes[avalable_actions[2][1]]].get_value(true), 6);
   
 }

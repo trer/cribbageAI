@@ -103,12 +103,13 @@ std::string card::string_format() {
     
 }
 
+bool card::operator<(card const & b) {
+    if (value == b.value) {
+        return suit < b.suit;
+    }
+    return value < b.value;
+}
 
-// int main() {
-//     card c1 = card(4, 'H');
-//     cout << c1.get_suit() << endl;
-//     cout << c1.get_value(true) << endl;
-//     c1.print_card();
-//     card c2 = card();
-//     c2.print_card();
-// }
+bool card::operator==(card const & b) {
+    return value == b.value && suit == b.suit;
+}

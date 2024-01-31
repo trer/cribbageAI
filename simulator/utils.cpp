@@ -41,15 +41,36 @@ bool exsists_legal_move(card* hand_cards, int num_hand_cards, int sum_cards_play
     return is_legal_move;
 }
 
-int update_legal_moves(int** available_actions, card* hand_cards, int num_hand_cards, int sum_cards_played, bool discard_done) {
+int update_legal_moves(int** available_actions, int* available_actions_indexes, card* hand_cards, int num_hand_cards, int sum_cards_played, bool discard_done) {
+    /*
+     * Iterates over all legal actions in a hand and enumerates them into a list
+     * Counts number of legal moves.
+     * Updates available_actions and available_actions_indexes inplace and returns num_available_actions
+    */
     bool is_legal_move = false;
     int num_available_actions = 0;
     int offset = 0;
+    card* hand_copy = new card[num_hand_cards];
+    for (int i = 0; i < num_hand_cards; i++) {
+        hand_copy[i] = hand_cards[i];
+    }
+    std::sort(hand_copy, hand_copy + num_hand_cards); // inplace sorting?
+    //map the presented actions to hand
+    for (int i = 0; i < num_hand_cards; i++) {
+        for (int j = 0; j < num_hand_cards; j++) {
+            if (hand_cards[i] == hand_copy[j]) {
+                available_actions_indexes[j] = i;
+            }
+        }
+        
+    }
+
     if (!discard_done) {
         for (int i = 0; i < num_hand_cards; i++) {
             for (int j = i+1; j < num_hand_cards; j++) {
                 available_actions[num_available_actions] = get_array(i, j);
                 num_available_actions++;
+                                
             }
         }
         

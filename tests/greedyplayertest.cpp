@@ -75,6 +75,23 @@ TEST(greedyplayer, check_discard) {
     
     GTEST_ASSERT_EQ(best_cards[0], 2);
     GTEST_ASSERT_EQ(best_cards[1], 3);
+
+    
+    // Find best discard, when it depends on if you are the dealer or not
+    player_hand[0] = card(3, 'H');
+    player_hand[1] = card(5, 'S');
+    player_hand[2] = card(7, 'H');
+    player_hand[3] = card(13, 'H');
+    player_hand[4] = card(11, 'D');
+    player_hand[5] = card(10, 'C');
+
+
+    //9 and 6 should be best when player is dealer 15 crib + run of 4
+    best_cards = g_player.get_best_two_cards(player_hand, num_cards_in_player_hand, true);
+    
+    GTEST_ASSERT_EQ(best_cards[0], 0);
+    GTEST_ASSERT_EQ(best_cards[1], 2);
+
 }
 
 TEST(greedyplayer, check_play) {

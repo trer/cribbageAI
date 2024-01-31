@@ -362,3 +362,227 @@ TEST(cribbage, copy_test) {
     }
 
 }
+
+
+TEST(cribbage, state_key_apply_action_from_list) {
+
+    mockplayer p1 = mockplayer();
+    mockplayer p2 = mockplayer();
+    simulator::cribbage game = simulator::cribbage(1, &p1, &p2, 1);
+
+    mock_deck deck = mock_deck();
+    
+    card player_and_opp_hand[13];
+
+    //player hand
+    player_and_opp_hand[0] = card(13, 'D');
+    player_and_opp_hand[1] = card(3, 'D');
+    player_and_opp_hand[2] = card(7, 'D');
+    player_and_opp_hand[3] = card(5, 'C');
+    player_and_opp_hand[4] = card(10, 'S');
+    player_and_opp_hand[5] = card(11, 'S');
+    //opp hand
+    player_and_opp_hand[6] = card(4, 'H');
+    player_and_opp_hand[7] = card(4, 'S');
+    player_and_opp_hand[8] = card(4, 'D');
+    player_and_opp_hand[9] = card(3, 'S');
+    player_and_opp_hand[10] = card(11, 'H');
+    player_and_opp_hand[11] = card(7, 'H');
+
+    //cut
+    player_and_opp_hand[12] = card(2, 'H');
+
+    card cards_played[8];
+    card crib[5];
+
+    //set order for both players
+    p1.order[0] = 4;
+    p1.order[1] = 5;
+    p1.order[2] = 3;
+    p1.order[3] = 2;
+    p1.order[4] = 1;
+    p1.order[5] = 0;
+
+    p2.order[0] = 4;
+    p2.order[1] = 5;
+    p2.order[2] = 3;
+    p2.order[3] = 2;
+    p2.order[4] = 1;
+    p2.order[5] = 0;
+    
+    
+
+    deck.set_top_13_cards(player_and_opp_hand);
+    game.set_deck(&deck);
+
+    game.setup_round();
+
+    std::string p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "3_5_7_10_11_13_|");
+
+    std::string p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "3_4_4_4_7_11_|");
+
+    game.apply_action_from_list(0); //player 1 discard cards
+    
+    GTEST_ASSERT_EQ(game.available_actions_indexes[game.available_actions[0][0]], 1);
+    GTEST_ASSERT_TRUE(*game.current_hand->get_card(game.available_actions_indexes[game.available_actions[0][0]]) == player_and_opp_hand[1]);
+    game.apply_action_from_list(0); //player 2 discard cards
+    // Hmmm, maybe I should have some safeguards to stop player 1 playing as player 2. That sounds like a painfull bug.
+    // TODO: later
+
+    p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "7_10_11_13_|");    
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "4_4_7_11_|");
+
+    GTEST_ASSERT_EQ(game.current_hand->get_card(game.available_actions_indexes[game.available_actions[0][0]])->get_value(true) ,4);
+    GTEST_ASSERT_EQ(game.current_hand->get_card(game.available_actions_indexes[game.available_actions[1][0]])->get_value(true) ,4);
+    GTEST_ASSERT_EQ(game.current_hand->get_card(game.available_actions_indexes[game.available_actions[2][0]])->get_value(true) ,7);
+    GTEST_ASSERT_EQ(game.current_hand->get_card(game.available_actions_indexes[game.available_actions[3][0]])->get_value(true) ,11);
+
+
+    game.apply_action_from_list(2);
+
+    p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "7_10_11_13_|7_");   
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "4_4_11_|7_");
+
+    
+    game.apply_action_from_list(0);
+
+    p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "10_11_13_|7_7_");   
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "4_4_11_|7_7_");
+
+
+    game.apply_action_from_list(2);
+
+    p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "10_11_13_|7_7_11_");   
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "4_4_|7_7_11_");
+
+
+    game.apply_action_from_list(1);
+
+    p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "10_11_13_|");   
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "4_|");
+
+
+    game.apply_action_from_list(2);
+
+    p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "10_11_|13_");   
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "4_|13_");
+
+
+    game.apply_action_from_list(0);
+
+    p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "10_11_|13_4_");   
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "|13_4_");
+
+
+    game.apply_action_from_list(0);
+
+    p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "11_|");   
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "|");
+
+
+    game.apply_action_from_list(0);
+
+    p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "|");   
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "|");
+
+
+    GTEST_ASSERT_EQ(game.is_round_done(), true);
+
+    int illigal = game.apply_action_from_list(0);
+
+    GTEST_ASSERT_EQ(illigal, -99);
+
+    p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "|");   
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "|");
+
+
+
+}
+
+TEST(cribbage, skip_to_playphase) {
+
+    greedyplayer p1 = greedyplayer();
+    greedyplayer p2 = greedyplayer();
+    simulator::cribbage game = simulator::cribbage(1, &p1, &p2, 1);
+
+    mock_deck deck = mock_deck();
+    
+    card player_and_opp_hand[13];
+
+    //player hand
+    player_and_opp_hand[0] = card(13, 'D');
+    player_and_opp_hand[1] = card(3, 'D');
+    player_and_opp_hand[2] = card(7, 'D');
+    player_and_opp_hand[3] = card(5, 'C');
+    player_and_opp_hand[4] = card(10, 'S');
+    player_and_opp_hand[5] = card(11, 'S');
+    //opp hand
+    player_and_opp_hand[6] = card(4, 'H');
+    player_and_opp_hand[7] = card(4, 'S');
+    player_and_opp_hand[8] = card(4, 'D');
+    player_and_opp_hand[9] = card(3, 'S');
+    player_and_opp_hand[10] = card(11, 'H');
+    player_and_opp_hand[11] = card(7, 'H');
+
+    //cut
+    player_and_opp_hand[12] = card(2, 'H');
+
+    card cards_played[8];
+    card crib[5];
+
+    deck.set_top_13_cards(player_and_opp_hand);
+    game.set_deck(&deck);
+
+    game.setup_round();
+    game.skip_to_play_phase();
+
+    std::string p1_dis_key = game.get_informationstate_string(1);
+    GTEST_ASSERT_EQ(p1_dis_key, "5_10_11_13_|");
+
+    std::string p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "4_4_4_7_|");
+
+    int num = game.get_num_available_actions();
+    int win = game.apply_action_from_list(4);
+
+    GTEST_ASSERT_EQ(num, 4);
+    GTEST_ASSERT_EQ(win, -99);
+    
+    win = game.apply_action_from_list(3);
+
+    p2_dis_key = game.get_informationstate_string(2);
+    GTEST_ASSERT_EQ(p2_dis_key, "4_4_4_|7_");
+
+}
