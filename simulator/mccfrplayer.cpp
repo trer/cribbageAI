@@ -28,6 +28,9 @@ policy::policy(std::unordered_map<std::string, std::vector<double>> in_infostate
 std::vector<double> policy::action_probabilities(simulator::cribbage* state, int player) {
     std::string info_state_key = state->get_informationstate_string(player);
     int num_available_actions = state->get_num_available_actions();
+    if (num_available_actions == 0) {
+        std::cout << "ERROR (probably): action probabilities called from a state that does not have any available actions" << std::endl;
+    }
 
     //if the infostate is not present in the strategy return a random move
     if (infostates.find(info_state_key) == infostates.end()) {
@@ -36,6 +39,7 @@ std::vector<double> policy::action_probabilities(simulator::cribbage* state, int
         for (int i = 0; i < num_available_actions; i++) {
             infostates[info_state_key][i] = 1.0/num_available_actions;
         }
+        
         
     }
     
@@ -101,6 +105,7 @@ void policy::deserialize(std::string filepath) {
         file.close();
     }
 }
+
  
 
 mccfrplayer::mccfrplayer() {
@@ -156,7 +161,7 @@ std::vector<double>* mccfrplayer::lookup_infostate_info(std::string some_sort_of
 }
 
 double mccfrplayer::episode(simulator::cribbage *state, int update_player, double player_reach, double opp_reach, double chance_reach, int start_point_diff) {
-    if (state->is_round_done()) {
+    if (state->is_playphase_done()) {
         return state->get_point_diff(update_player) - start_point_diff; //simulator expects player 1 or 2
     }
 
@@ -236,8 +241,6 @@ double mccfrplayer::episode(simulator::cribbage *state, int update_player, doubl
     
 
     return value_estimate;
-    
-
 }   
 
 double* mccfrplayer::regret_matching(double* positive_regret, std::vector<double>& regrets, int num_legal_actions) {
@@ -286,7 +289,7 @@ void mccfrplayer::iteration() {
         game->reset();
         game->setup_round();
         game->skip_to_play_phase();
-        episode(game, update_player, 1.0, 1.0, 1.0, negate * (game->get_player1_score() - game->get_player2_score())); //update chance_reach to be correct (maybe it is fine as long as the chance-reach-weight is the same)
+        episode(game, update_player, 1.0, 1.0, 1.0/1820, negate * (game->get_player1_score() - game->get_player2_score())); //update chance_reach to be correct (maybe it is fine as long as the chance-reach-weight is the same)
     }
 }
 

@@ -506,26 +506,26 @@ TEST(cribbage, state_key_apply_action_from_list) {
     GTEST_ASSERT_EQ(p2_dis_key, "|");
 
 
-    game.apply_action_from_list(0);
+    int il = game.apply_action_from_list(0);
 
     p1_dis_key = game.get_informationstate_string(1);
-    GTEST_ASSERT_EQ(p1_dis_key, "|");   
+    GTEST_ASSERT_EQ(p1_dis_key, "|11_");   
 
     p2_dis_key = game.get_informationstate_string(2);
-    GTEST_ASSERT_EQ(p2_dis_key, "|");
+    GTEST_ASSERT_EQ(p2_dis_key, "|11_");
 
 
-    GTEST_ASSERT_EQ(game.is_round_done(), true);
+    GTEST_ASSERT_EQ(game.is_playphase_done(), true);
 
     int illigal = game.apply_action_from_list(0);
 
     GTEST_ASSERT_EQ(illigal, -99);
 
     p1_dis_key = game.get_informationstate_string(1);
-    GTEST_ASSERT_EQ(p1_dis_key, "|");   
+    GTEST_ASSERT_EQ(p1_dis_key, "|11_");   
 
     p2_dis_key = game.get_informationstate_string(2);
-    GTEST_ASSERT_EQ(p2_dis_key, "|");
+    GTEST_ASSERT_EQ(p2_dis_key, "|11_");
 
 
 

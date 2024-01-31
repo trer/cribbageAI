@@ -94,7 +94,7 @@ bool cheatingutcplayer::timeout() {
 
 node* cheatingutcplayer::tree_policy(node* n) {
     // while round is not over
-    while (!n->get_state()->is_round_done()) {
+    while (!n->get_state()->is_playphase_done()) {
         if (n->is_fully_expanded()) {
             n = get_best_child(n, cp);
         }
@@ -126,7 +126,7 @@ double* cheatingutcplayer::default_policy(simulator::cribbage *state) {
     int num_available_actions;
     int index;
     int win = 0;
-    while (!state->is_round_done() && win != -99) {
+    while (!state->is_playphase_done() && win != -99) {
         num_available_actions = state->get_num_available_actions();
         if (num_available_actions > 1) {
             std::uniform_int_distribution<int> distrib(0, state->get_num_available_actions()-1);

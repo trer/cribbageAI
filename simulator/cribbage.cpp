@@ -45,7 +45,7 @@ void cribbage::copy_self(const cribbage &source) {
         cut_card = base_deck.cut(); 
     }
 
-    // Does this sometime lead to reccursion? hopefully not (calls lead to same player instance, meaning that statefull players will cause the games to go differently)
+    // Does this sometime lead to problems (calls lead to same player instance, meaning that statefull players will cause the games to go differently)
     // but we might not need to set the players at all
     player1_ready = source.player1_ready;
     if (source.player1_ready) {
@@ -124,8 +124,6 @@ void cribbage::init(int first_dealer, deck* in_deck) {
         game_deck = in_deck;
     }
     
-    wins[0] = 0;
-    wins[1] = 0;
     reset(first_dealer);
 }
 
@@ -594,6 +592,10 @@ bool cribbage::discard_done() {
     return dealer_discard_done && pone_discard_done;
 }
 
+bool cribbage::is_playphase_done() {
+    return (dealer_hand.get_num_cards() == 0 && pone_hand.get_num_cards() == 0) || check_win();
+}
+
 bool cribbage::is_round_done() {
     /* 
      * When checkning if the round is done we also have to
@@ -649,7 +651,7 @@ int cribbage::apply_action_from_list(int action_index) {
     //setup next turn
     set_current_player();
     //if a player has no available moves he must call go (I want to do this automatically)
-    if (get_num_available_actions() == 0 && !is_round_done()) {
+    if (get_num_available_actions() == 0 && !is_playphase_done()) {
         win = apply_action_from_list(-1);
     }
     return win;

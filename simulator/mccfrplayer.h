@@ -32,10 +32,12 @@ class policy {
         policy(std::unordered_map<std::string, std::vector<double>> in_infostates);
 
         std::vector<double> action_probabilities(simulator::cribbage* state, int player);
+        
 
         void serialize(std::string filepath);
         void deserialize(std::string filepath);
 };
+
 
 class mccfrplayer {
 

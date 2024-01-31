@@ -29,7 +29,7 @@ TEST(mccfrplayer, run_test) {
 
     policy* p = mccfr.average_policy();
 
-    while (!game.is_round_done()) {
+    while (!game.is_playphase_done()) {
         std::vector<double> ac = p->action_probabilities(&game, game.get_current_player());
         std::discrete_distribution<int> d(ac.begin(), ac.end());
         
@@ -59,8 +59,65 @@ TEST(mccfrplayer, run_test) {
 }
 
 
+TEST(mccfrplayer, maintest) {
+    std::string filename = "mccfr_policy_10.bin"; 
+    std::mt19937 gen(1);
+    greedyplayer p1 = greedyplayer();
+    greedyplayer p2 = greedyplayer();
+    simulator::cribbage game = simulator::cribbage(2, &p1, &p2);
+    mccfrplayer mccfr = mccfrplayer(&game, 0.06, &gen);
+
+    int num_iter = 10;//0000
+    for (int i = 0; i < num_iter; i++) {
+        mccfr.iteration();
+    }
+    policy* p = mccfr.average_policy();
+    p->serialize(filename);
+
+    int num_games = 10;
+    int greedypoints = 0;
+    int mccfrpoints = 0;
+    int win;
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < num_games; i++)
+    {
+        game.reset();
+        game.setup_round();
+        game.skip_to_play_phase();
+        
+        while (!game.is_playphase_done()) {
+            if (game.get_current_player() == 1) {
+                std::vector<double> ac1 = p->action_probabilities(&game, 1);
+                std::discrete_distribution<int> d(ac1.begin(), ac1.end());
+                int sampled_action_index = d(gen);
+                win = game.apply_action_from_list(sampled_action_index);
+            } else {
+                game.set_play_action(p2.poll_player(!game.discard_done(), game.get_player_hand(2), game.cards_played_since_new_stack, game.num_cards_played_since_new_stack, game.sum_cards, game.get_player_hand_size(1), game.get_player1_score(), game.get_player2_score(), !game.pone_to_play));
+                game.resolve_action();
+                game.set_current_player();
+                if (game.get_num_available_actions() == 0 && !game.is_playphase_done()) {
+                    win = game.apply_action_from_list(-1);
+                }   
+            }
+            if (win != 0) {
+                std::cout << "hold up" << std::endl;
+            }
+        }
+        game.matching_setup();
+        game.matching();
+
+        mccfrpoints += game.get_player1_score();
+        greedypoints += game.get_player2_score();
+    }
+
+
+}
+
 TEST(mccfrplayer, performance_test) {
     GTEST_SKIP(); //We don't need to check the performance each time (ain't nobody got time for that)
+    int num_training_iter = 10000;
+    
     std::mt19937 gen(1);
     
     greedyplayer p1 = greedyplayer();
@@ -72,10 +129,13 @@ TEST(mccfrplayer, performance_test) {
     
     std::unordered_map<std::string, std::vector<double>*>* infostates = mccfr.get_infostates();
 
-    for (int i = 0; i < 10000; i++){
+    std::chrono::steady_clock::time_point training_start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < num_training_iter; i++){
         mccfr.iteration();
     }
-    
+    std::chrono::steady_clock::time_point training_end = std::chrono::high_resolution_clock::now();
+    auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(training_end - training_start);
+    GTEST_ASSERT_LT(dur/num_training_iter, 6);
     
     game.reset();
     game.setup_round();
@@ -111,7 +171,7 @@ TEST(mccfrplayer, performance_test) {
     for (int i = 0; i < 100; i++) {
         game.reset();
         game.setup_round();
-        while (!game.is_round_done())
+        while (!game.is_playphase_done())
         {
             std::vector<double> ac1 = p->action_probabilities(&game, 1);
             std::vector<double> ac2 = loaded_policy.action_probabilities(&game, 1);

@@ -30,7 +30,6 @@ class cribbage {
         int seed;
         bool player1_ready;
         bool player2_ready;
-        int wins[2];
 
         int next_dealer;
 
@@ -40,11 +39,10 @@ class cribbage {
         std::mt19937 gen;
         std::uniform_int_distribution<int> distrib;
 
-        
-
+    
 
         int play_phase();
-        int matching();
+        
         void copy_self(const cribbage &source);
 
     
@@ -89,6 +87,7 @@ class cribbage {
         void skip_to_play_phase(player* discard_policy=nullptr);
         int handle_discards();
         void matching_setup();
+        int matching();
         int matching_score_pone();
         int matching_score_dealer();
 
@@ -117,6 +116,7 @@ class cribbage {
         void set_play_action(action a);
 
         bool discard_done();
+        bool is_playphase_done();
         bool is_round_done();
         int get_num_available_actions();
         int* get_available_actions();
