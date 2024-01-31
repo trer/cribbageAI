@@ -99,7 +99,6 @@ class cribbage {
         const cribbage& operator= (const cribbage&);
         cribbage(int seed, int first_dealer=0, deck* in_deck=nullptr);
         cribbage(int seed, player *player1, player *player2, int first_dealer=0, deck* in_deck=nullptr);
-        cribbage(int seed, char player1, char player2, int first_dealer=0);
         void init(int first_dealer=0, deck* in_deck=nullptr);
         void set_deck(deck* in_deck);
         void set_player(player *player, int num);

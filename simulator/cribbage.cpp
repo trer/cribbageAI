@@ -115,38 +115,6 @@ cribbage::cribbage(int in_seed, player *player1_in, player *player2_in, int firs
     init(first_dealer, in_deck);
 }
 
-cribbage::cribbage(int in_seed, char player1_in, char player2_in, int first_dealer): gen(in_seed), distrib(1, 2) {
-    //not working, instanciated players are deleted by clean-up
-    seed = in_seed;
-
-    switch (player1_in)
-    {
-    case 'r':
-        set_player(&randomplayer(), 1);
-        break;
-    case 'h':
-        set_player(&realplayer(), 2);  
-        break;
-    default:
-        cout << "No viable player found for player1 with char-value: " << player1_in << endl;
-        break;
-    }
-
-    switch (player2_in)
-    {
-    case 'r':
-        set_player(&randomplayer(), 2);
-        break;
-    case 'h':
-        set_player(&realplayer(), 2);
-        break;
-    default:
-        cout << "No viable player found for player2 with char-value: " << player2_in << endl;
-        break;
-    }
-
-    init(first_dealer, nullptr);
-}
 
 void cribbage::init(int first_dealer, deck* in_deck) {
     base_deck = deck(distrib(gen));

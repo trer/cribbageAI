@@ -7,7 +7,7 @@ class greedyplayer : public player{
 
     private:
         internal_deck player_deck = internal_deck();
-        bool greedyplayer::card_in_hand(card* hand_cards, int num_cards, card* card_to_check);
+        bool card_in_hand(card* hand_cards, int num_cards, card* card_to_check);
         action discard_two_cards(bool is_dealer);
         action play_a_card(card* cards_played, int num_cards_played, int sum_played_cards);
         int best_cards_indexes[2];

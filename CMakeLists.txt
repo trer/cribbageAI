@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.28.0)
+set (CMAKE_CXX_STANDARD 20)
+
 
 set(this main1)
 
 project(${this} LANGUAGES CXX)
+
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(fix123 "64")

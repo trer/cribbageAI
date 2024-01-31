@@ -26,17 +26,17 @@ class node {
         node();
         node(simulator::cribbage in_game, int action, node* parent);
 
-        simulator::cribbage* node::get_state();
-        void node::backup_visit(double* payoffs);
-        node* node::get_parent();
-        int node::get_action();
-        node *node::add_child(node *child);
-        int node::get_visits();
-        double node::get_reward(int player);
+        simulator::cribbage* get_state();
+        void backup_visit(double* payoffs);
+        node* get_parent();
+        int get_action();
+        node *add_child(node *child);
+        int get_visits();
+        double get_reward(int player);
         int get_num_children();
-        std::forward_list<node*>* node::get_children();
-        bool node::is_fully_expanded();
-        void node::set_fully_expanded();
+        std::forward_list<node*>* get_children();
+        bool is_fully_expanded();
+        void set_fully_expanded();
 
 };
 
