@@ -22,6 +22,9 @@ namespace controller {
             case 'g':
                 player1 = &g1;
                 break;
+            case 'm':
+                player1 = new policyplayer(path_to_policies_folder + "mccfrpolicy_10000.bin", rand());
+                break;
             default:
                 break;
             }
@@ -37,6 +40,9 @@ namespace controller {
                 break;
             case 'g':
                 player2 = &g2;
+                break;
+            case 'm':
+                player2 = new policyplayer(path_to_policies_folder + "mccfrpolicy_10000.bin", rand());
                 break;
             default:
                 break;
@@ -64,12 +70,10 @@ namespace controller {
         discard_set_p1 = false;
         discard_set_p2 = false;
         game.setup_round();
-        game.set_current_player();
     }
 
     void game_controller::setup_play_phase() {
-        game.setup_play_phase();
-        game.set_current_player(); //setup for first turn
+        game.setup_play_phase(); //hope this one isn't used
     }
 
     int game_controller::play_next_step()
@@ -86,18 +90,17 @@ namespace controller {
     }
 
     std::string game_controller::get_cut_card() {
-        card* c = game.game_deck->cut();
+        //cut card is inserted into each players hand
+        //problematic if this is called before cutcard is revealed (might want to check that)
+        card* c = game.get_player_hand(-1)->get_card(4);
         std::string cut_name = c->string_format();
         return cut_name;
     }
 
     std::string game_controller::get_card(int index, int player) {
         card* tmp;
-        if (player == -1) {
-            tmp = game.crib.get_card(index);
-        } else {
-            tmp = game.get_player_hand(player)->get_card(index);
-        }
+        //get_player_hand(-1) returns the crib!
+        tmp = game.get_player_hand(player)->get_card(index);
         std::string card_name = tmp->string_format();
         return card_name;
     }
@@ -138,16 +141,7 @@ namespace controller {
     }
 
     int game_controller::resolve_action() {
-        game.resolve_action();
-        if (game.get_player_hand_size(1) == 0 && game.get_player_hand_size(2) == 0) {
-            game.last_card_played();
-        }
-        int win = game.check_win();
-        
-        //setup next turn
-        game.set_current_player();
-        
-        return win;
+        return game.resolve_action();
     }
 
     bool game_controller::discard_set() {
@@ -159,7 +153,7 @@ namespace controller {
     }
 
     int game_controller::get_sum_cards_played() {
-        return game.sum_cards;
+        return game.get_sum_cards_played();
     }
 
     bool game_controller::has_legal_move(int player) {
@@ -173,20 +167,7 @@ namespace controller {
     }
 
     bool game_controller::has_called_go(int player) {
-        if (player == 1) {
-            if (game.player1 == game.pone) {
-                return game.pone_go;
-            } else {
-                return game.dealer_go;
-            }
-        } else if (player == 2) {
-            if (game.player2 == game.pone) {
-                return game.pone_go;
-            } else {
-                return game.dealer_go;
-            }
-        }
-        return false;
+        return game.player_has_called_go(player);    
     }
 
     void game_controller::matching_setup() {
@@ -205,20 +186,15 @@ namespace controller {
 
     int game_controller::get_points(int player) {
         if (player == 1) {
-            return game.player1_score;
+            return game.get_player1_score();
         } else if (player == 2) {
-            return game.player2_score;
+            return game.get_player2_score();
         }
         return -1;
     }
 
     int game_controller::get_current_pone() {
-        if (game.player1 == game.pone) {
-            return 1;
-        } else if (game.player2 == game.pone) {
-            return 2;
-        }
-        return -1;
+        return game.get_current_pone();
     }
 
     std::string game_controller::poll_player(int p) {
@@ -229,6 +205,7 @@ namespace controller {
         int score_self;
         int score_opp;
         int win=0;
+        bool pone_to_play = false;
         if (p == 1) {
             player_to_poll = player1;
 
@@ -239,8 +216,11 @@ namespace controller {
                 discard_set_p1 = true;
             }
             opp_num_cards = game.get_player_hand(2)->get_num_cards();
-            score_self = game.player1_score;
-            score_opp = game.player2_score;
+            score_self = game.get_player1_score();
+            score_opp = game.get_player2_score();
+            if (get_current_pone() == 1) {
+                pone_to_play = true;
+            }
 
         } else if (p == 2) {
             player_to_poll = player2; 
@@ -251,16 +231,24 @@ namespace controller {
                 discard_set_p2 = true;
             }
             opp_num_cards = game.get_player_hand(2)->get_num_cards();
-            score_self = game.player2_score;
-            score_opp = game.player1_score;
+            score_self = game.get_player2_score();
+            score_opp = game.get_player1_score();
+            if (get_current_pone() == 2) {
+                pone_to_play = true;
+            }
         }
 
         if (player_to_poll == nullptr) {
             std::cout << "NO PLAYER FOUND, returning" << std::endl;
             return "";
         }
+        
+        // game.set_action_for_player(player_to_poll);
+        // int num_card_played = game.get_num_cards_played();
+        // card* played_card = game.get_cards_played()[num_card_played-1];
+        // card* played_card = game.get_player_hand(-1)->get_cards();
 
-        action a = player_to_poll->poll_player(discard_phase, game.get_player_hand(p), game.cards_played, game.num_cards_played, game.sum_cards, opp_num_cards, score_self, score_opp, !game.pone_to_play);
+        action a = player_to_poll->poll_player(discard_phase, game.get_player_hand(p), game.get_cards_played(), game.get_num_cards_played(), game.get_sum_cards_played(), opp_num_cards, score_self, score_opp, !pone_to_play);
         out_string = a.card1->string_format();
         if (discard_phase) {
             game.set_discard(a, p);

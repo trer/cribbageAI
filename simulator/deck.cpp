@@ -77,7 +77,7 @@ void deck::shuffle() {
 card* deck::deal_top() {
     if (num_cards <= 0) {
         cout << "out of cards" << endl;
-        return 0;
+        return nullptr;
     }
     num_cards--;
     return &cards[num_cards];

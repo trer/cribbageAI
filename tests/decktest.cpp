@@ -38,8 +38,8 @@ TEST(deck, deck_init) {
 
     card * zero_card1 = d1.deal_top();
     card * zero_card2 = d1.deal_top();
-    GTEST_ASSERT_EQ((int) zero_card1, 0) << "After all cards have been drawn only a 0 should be returned";
-    GTEST_ASSERT_EQ((int) zero_card2, 0) << "After all cards have been drawn only a 0 should be returned 2";
+    GTEST_ASSERT_EQ(zero_card1, nullptr) << "After all cards have been drawn only a 0 should be returned";
+    GTEST_ASSERT_EQ(zero_card2, nullptr) << "After all cards have been drawn only a 0 should be returned 2";
 
     d1.shuffle();
 

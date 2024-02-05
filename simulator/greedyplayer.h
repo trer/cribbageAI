@@ -3,6 +3,9 @@
 #include "deck.h"
 #include "scorer.h"
 
+
+
+
 class greedyplayer : public player{
 
     private:

@@ -14,7 +14,7 @@ player::player() {
     }
 }
 
-bool player::update_legal_moves(int sum_cards_played) {
+bool player::find_legal_moves(int sum_cards_played) {
     bool is_legal_move = false;
     int num_cards = player_hand->get_num_cards();
     card* cards = player_hand->get_cards();
@@ -84,7 +84,7 @@ action randomplayer::poll_player(bool discard_phase, hand *p_hand, card *cards_p
     if (discard_phase) {
         return discard_two_random_cards();
     }
-    if (!update_legal_moves(sum_cards)) {
+    if (!find_legal_moves(sum_cards)) {
         return action();
     } else {
         return play_random_card();
@@ -107,7 +107,7 @@ action realplayer::discard_two_cards() {
 }
 
 action realplayer::play_a_card(int sum_cards_played) {
-    if (update_legal_moves(sum_cards_played)) {
+    if (find_legal_moves(sum_cards_played)) {
         int pos;
         cout << "Give index of the card you want to play";
         cin >> pos;
@@ -176,4 +176,76 @@ action mockplayer::poll_player(bool discard_phase, hand *p_hand, card* cards_pla
         count = 0;
     }
     return a;
+}
+
+policyplayer::policyplayer() : gen(rand()){
+
+}
+
+policyplayer::policyplayer(std::string filepath, int in_seed) : gen(in_seed) {
+    load_policy(filepath);
+}
+
+void policyplayer::set_seed(int in_seed) {
+    gen.seed(in_seed);
+}
+
+bool policyplayer::load_policy(std::string filepath) {
+    std::cout << "Loading policy from: " << filepath << std::endl;
+    policy_loaded = precomputed_policy.deserialize(filepath);
+    return policy_loaded;
+}
+
+std::string policyplayer::get_informationstate_string(bool discard_phase, hand* p_hand, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) {
+    /*
+     * Returns a string representing the current information-state.
+     * This will need to be updated as more information abstractions are used.
+     * Currently only supports default abstraction
+    */
+    int n = p_hand->get_num_cards();
+    int* card_ranks = new int[n];
+    for (int i = 0; i < n; i++) {
+        card_ranks[i] = p_hand->get_card(i)->get_value(true);
+    }
+    sort(card_ranks, card_ranks + n);
+
+    std::string result = "";
+    for (int i = 0; i < n; i++){
+        result.append(to_string(card_ranks[i]) + "_");
+    }
+    
+    result.append("|");
+
+    for (int i = 0; i < num_cards_played; i++) {
+        result.append(to_string(cards_played[i].get_value(true)) + "_");
+    }
+    
+    delete card_ranks;
+    return result;
+}
+
+action policyplayer::poll_player(bool discard_phase, hand* p_hand, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer) {
+    std::string key = get_informationstate_string(discard_phase, p_hand, cards_played, num_cards_played, sum_cards, opponent_num_cards, score_self,  score_opp, is_dealer);
+    //if the infostate is not present in the strategy return a random move
+
+    if (!precomputed_policy.part_of_policy(key)) {
+        return r.poll_player(discard_phase, p_hand, cards_played, num_cards_played, sum_cards, opponent_num_cards, score_self, score_opp, is_dealer);
+    }
+    
+    std::vector<double> ac = precomputed_policy.action_probabilities(key);
+
+    std::discrete_distribution<int> d(ac.begin(), ac.end());
+    int sampled_action_index = d(gen); // replace with mersene twister
+    num_available_actions = update_legal_moves(available_actions, available_actions_indexes, p_hand->get_cards(), p_hand->get_num_cards(), sum_cards, true);
+    
+    if (discard_phase) {
+        c1 = *p_hand->get_card(available_actions_indexes[available_actions[sampled_action_index][0]]);
+        c2 = *p_hand->get_card(available_actions_indexes[available_actions[sampled_action_index][1]]);
+        return action(&c1, &c2);
+    } else {
+        c1 = *p_hand->get_card(available_actions_indexes[available_actions[sampled_action_index][0]]);
+        return action(&c1);
+    }
+
+    return action();
 }

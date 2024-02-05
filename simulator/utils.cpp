@@ -163,6 +163,116 @@ bool check_valid_move(bool discard_phase, card *cards_played, int num_cards_play
 }
 
 
+policy::policy() {
+
+}
+
+policy::policy(std::unordered_map<std::string, std::vector<double>*> in_states, int index) {
+
+    for (auto it : in_states) {
+        
+        // int length = it.second->size();
+        
+        infostates[it.first] = std::vector<double>(it.second[index]);
+        // for (int i = 0; i < length; i++) {
+        //     infostates[it.first][i] = it.second[index][i];
+        // }
+        
+    }
+    
+}
+
+policy::policy(std::unordered_map<std::string, std::vector<double>> in_infostates) {
+    infostates = in_infostates;
+}
+
+bool policy::part_of_policy(std::string key) {
+    return !(infostates.find(key) == infostates.end());
+}
+
+std::vector<double> policy::action_probabilities(std::string key) {
+    return infostates[key];
+}
+
+
+std::vector<double> policy::action_probabilities(std::string info_state_key, int num_available_actions) {
+
+    if (num_available_actions == 0) {
+        std::cout << "ERROR (probably): action probabilities called from a state that does not have any available actions" << std::endl;
+    }
+
+    //if the infostate is not present in the strategy return a random move
+    if (!part_of_policy(info_state_key)) {
+        infostates[info_state_key] = std::vector<double>();
+        std::generate_n(std::back_inserter(infostates[info_state_key]), num_available_actions, [] {return 1.0;});
+        for (int i = 0; i < num_available_actions; i++) {
+            infostates[info_state_key][i] = 1.0/num_available_actions;
+        }   
+    }
+    
+    return infostates[info_state_key];
+}
+
+bool policy::serialize(std::string filepath) {
+    std::ofstream file;
+    file.open(filepath, std::ios::binary | std::ios::out);
+    if (file.is_open()) {
+        size_t length = infostates.size();
+        size_t str_length;
+        size_t vec_length;
+        file.write(reinterpret_cast<char*>(&length), sizeof(length));
+        for(auto it : infostates) {
+            str_length = it.first.length();
+            file.write(reinterpret_cast<char*>(&str_length), sizeof(str_length));
+            file.write( it.first.c_str(), str_length);
+            vec_length = it.second.size();
+            file.write(reinterpret_cast<char*>(&vec_length), sizeof(vec_length));
+            file.write(reinterpret_cast<char*>(&it.second[0]), vec_length * sizeof(double));
+        }
+        
+        file.close();
+        return true;
+    }
+    return false;
+}
+
+bool policy::deserialize(std::string filepath) {
+    std::ifstream file;
+    file.open(filepath, std::ios::binary | std::ios::out);
+    if (file.is_open()) {
+        size_t length;
+        
+        
+
+        file.read(reinterpret_cast<char*>(&length), sizeof length);
+
+        for (int i = 0; i < length; i++) {
+            size_t str_length;
+            size_t vec_length;
+            char* tmp_key;
+            std::string tmp_key2;
+            file.read(reinterpret_cast<char*>(&str_length), sizeof(str_length));
+            tmp_key = new char[str_length+1];
+            file.read(reinterpret_cast<char*>(&tmp_key[0]), str_length);
+            tmp_key[str_length] = '\0';
+            tmp_key2 = tmp_key;
+            file.read(reinterpret_cast<char*>(&vec_length), sizeof(vec_length));
+            infostates[tmp_key2] = std::vector<double>(vec_length);
+            file.read(reinterpret_cast<char*>( &infostates[tmp_key2][0]), vec_length * sizeof(double));
+        }
+        
+        file.close();
+        return true;
+    } else {
+        std::cout << "BAD READ nothing loaded" << std::endl;
+        return false;
+    }
+}
+
+
+
+
+
 
 int action0[1] = {0};
 int action1[1] = {1};

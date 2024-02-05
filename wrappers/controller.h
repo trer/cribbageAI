@@ -10,6 +10,7 @@ namespace controller {
     class game_controller {
         private:
             simulator::cribbage game;
+            std::string path_to_policies_folder = "C:/Users/tor-d/git/cribbageAI/precomputed_policies";
 
             bool discard_set_p1;
             bool discard_set_p2;

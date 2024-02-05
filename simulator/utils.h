@@ -1,7 +1,13 @@
 #pragma once
 #include <algorithm>
-#include "./action.h"
-#include "./card.h"
+#include <fstream>
+#include <forward_list>
+#include <iostream>
+#include <string>
+#include <unordered_map>
+
+#include "action.h"
+#include "card.h"
 
 bool part_of_hand(card* hand_cards, int num_hand_cards, card* card_to_check);
 bool check_valid_move(bool discard_phase, card *cards_played, int num_cards_played,
@@ -13,3 +19,26 @@ int update_legal_moves(int** available_actions, int* available_actions_indexes, 
 
 int* get_array(int i);
 int* get_array(int i, int j);
+
+
+class policy {
+    private:
+
+    public:
+    
+        std::unordered_map<std::string, std::vector<double>> infostates;
+
+        
+        policy();
+        policy(std::unordered_map<std::string, std::vector<double>*> cfr_infostates, int index);
+        policy(std::unordered_map<std::string, std::vector<double>> in_infostates);
+
+        bool part_of_policy(std::string key);
+        std::vector<double> action_probabilities(std::string key);
+        std::vector<double> action_probabilities(std::string info_state_key, int num_available_actions);
+        
+
+        bool serialize(std::string filepath);
+        bool deserialize(std::string filepath);
+};
+

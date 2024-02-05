@@ -37,7 +37,6 @@ class Game():
                 elif self.p1 != 'h':
                     self.p1_discard_done = True # not needed i think
                     self.cribbage_simulator.poll_player(1)
-                    self.handle_discards() 
                     answer = "discard for p1 automaticly set"
                 else:
                     question = "Player 1 must choose 2 cards to discard"
@@ -48,7 +47,6 @@ class Game():
                 elif self.p2 != 'h':
                     self.p2_discard_done = True # not needed i think
                     self.cribbage_simulator.poll_player(2)
-                    self.handle_discards() 
                     answer = "discard for p2 automaticly set"
                 else:
                     if question == "":
@@ -191,18 +189,13 @@ class Game():
     
     def handle_discards(self):
         if self.cribbage_simulator.discard_set():
-            print("trying to handle discards")
-            win = self.cribbage_simulator.handle_discards()
-            print("handled discards!")
+            print("discards should be handled!")
             self.cards_to_place_in_crib = self.get_cards(-1)
             print("cards to place in crib is set")
-            
-            if win != 0:
-                self.game_cleanup(win)
-            else:
-                self.phase = "play_phase"
-                self.cribbage_simulator.setup_play_phase()
-                self.clear_actions()
+        
+            self.phase = "play_phase"
+            self.cribbage_simulator.setup_play_phase()
+            self.clear_actions()
             return True
         return False
 

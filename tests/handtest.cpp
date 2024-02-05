@@ -17,7 +17,8 @@ TEST(card, hand_test) {
 
     GTEST_ASSERT_EQ(h1.get_num_cards(), 6);
     for (int i = 0; i < 6; i++) {
-        GTEST_ASSERT_NE((int) h1.get_card(i), 0) << "After cards are drawn they should not be 0";
+        GTEST_ASSERT_NE(h1.get_card(i)->get_suit(false), 'N') << "After cards are drawn they should not be 0";
+        GTEST_ASSERT_NE(h1.get_card(i)->get_value(true), 0) << "After cards are drawn they should not be 0";
     }
 
     card c1 = *h1.get_card(0);

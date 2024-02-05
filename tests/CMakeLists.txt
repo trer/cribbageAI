@@ -15,6 +15,7 @@ set(sources
     handtest.cpp
     maintest.cpp
     mccfrplayertest.cpp
+    playertest.cpp
     scorertest.cpp
     cribbagetest.cpp
 )

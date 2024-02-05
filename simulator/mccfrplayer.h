@@ -12,31 +12,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "player.h"
 #include "utils.h"
 #include "cribbage.h"
-#include "cheatingutcplayer.h"
-
-
-
-class policy {
-    private:
-
-    public:
-    
-        std::unordered_map<std::string, std::vector<double>> infostates;
-
-        
-        policy();
-        policy(std::unordered_map<std::string, std::vector<double>*> cfr_infostates, int index);
-        policy(std::unordered_map<std::string, std::vector<double>> in_infostates);
-
-        std::vector<double> action_probabilities(simulator::cribbage* state, int player);
-        
-
-        void serialize(std::string filepath);
-        void deserialize(std::string filepath);
-};
 
 
 class mccfrplayer {
@@ -61,8 +38,8 @@ class mccfrplayer {
         double* regret_matching(double* p, std::vector<double>& regrets, int num_legal_actions);
         double baseline_corrected_child_value(double child_value, int action_index, int sampled_action_index, double sample_probability);
 
-        void full_update_average(node* state, double* reach_probabilities);
-        double update_regrets(node* state, int player);
+        // void full_update_average(node* state, double* reach_probabilities);
+        // double update_regrets(node* state, int player);
 
     public:
         mccfrplayer();

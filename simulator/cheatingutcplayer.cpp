@@ -72,7 +72,6 @@ void node::set_fully_expanded() {
     fully_expanded = true;
 }
 
-
 cheatingutcplayer::cheatingutcplayer(double in_cp, long in_max_time, int in_max_nodes, std::mt19937 *in_gen) {
     cp = in_cp;
     max_time = in_max_time;
@@ -153,7 +152,7 @@ void cheatingutcplayer::backup(node* n, double* payoffs) {
 }
 
 node* cheatingutcplayer::get_best_child(node* n, double c) {
-    int player = n->get_state()->get_current_player();
+    int player = n->get_state()->get_current_player() - 1;
     node *max_child;
     double max = -INFINITY;
     for (node* child : *n->get_children()) {
@@ -201,9 +200,8 @@ int cheatingutcplayer::search(simulator::cribbage *state) {
 
 int cheatingutcplayer::get_move(simulator::cribbage *state) {
     int num_moves = state->get_num_available_actions();
-    int* moves = state->get_available_actions();
     if (num_moves == 1) {
-        return moves[0];
+        return 0;
     }
     else {
         return search(state);

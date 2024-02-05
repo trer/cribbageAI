@@ -29,8 +29,7 @@ int greedyplayer::get_best_card(card* hand_cards, int num_cards, card* cards_pla
     for (int i = 0; i < num_cards; i++) {
         tmp_cards_played[counter] = hand_cards[i];
         if (check_valid_move(false, cards_played, num_cards_played, sum_cards, cards_in_crib, 2,
-             hand_cards, num_cards, action(&hand_cards[i]))) 
-            {
+             hand_cards, num_cards, action(&hand_cards[i]))) {
                 score = score_played_card(tmp_cards_played, counter+1, &hand_cards[i], sum_cards);
             } else {
                 score = -1;
@@ -47,7 +46,7 @@ int greedyplayer::get_best_card(card* hand_cards, int num_cards, card* cards_pla
 
 int* greedyplayer::get_best_two_cards(card* hand_cards, int num_cards, bool is_dealer) {
     /*
-     * If we get a SEH error here, that it is indeed play-phase
+     * If we get a SEH error here, it is likely because this is called during the play-phase
     */
     double best_score = -1.0;
     card tmp_crib[3];
@@ -128,7 +127,7 @@ action greedyplayer::poll_player(bool discard_phase, hand* p_hand, card* cards_p
     if (discard_phase) {
         return discard_two_cards(is_dealer);
     }
-    if (!update_legal_moves(sum_cards)) {
+    if (!find_legal_moves(sum_cards)) {
         return action();
     } else {
         return play_a_card(cards_played, num_cards_played, sum_cards);

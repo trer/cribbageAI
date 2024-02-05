@@ -283,6 +283,51 @@ TEST(cribbage, endgame_test) {
     
 }
 
+TEST(cribbage, predictability_test) {
+
+    greedyplayer p1 = greedyplayer();
+    greedyplayer p2 = greedyplayer();
+    simulator::cribbage g1 = simulator::cribbage(1, &p1, &p2, 1);
+    simulator::cribbage g2 = simulator::cribbage(1, &p1, &p2, 1);
+    
+    g1.setup_round();
+    g2.setup_round();
+
+    for (int i = 0; i < g1.get_player_hand_size(1); i++) {
+        GTEST_ASSERT_EQ(g1.get_player_hand(1)->get_card(i)->get_value(true), g2.get_player_hand(1)->get_card(i)->get_value(true));
+        GTEST_ASSERT_EQ(g1.get_player_hand(2)->get_card(i)->get_value(true), g2.get_player_hand(2)->get_card(i)->get_value(true));
+    }
+    
+    g1.round();
+    g2.round();
+
+    g1.setup_round();
+    g2.setup_round();
+
+    for (int i = 0; i < g1.get_player_hand_size(1); i++) {
+        GTEST_ASSERT_EQ(g1.get_player_hand(1)->get_card(i)->get_value(true), g2.get_player_hand(1)->get_card(i)->get_value(true));
+        GTEST_ASSERT_EQ(g1.get_player_hand(2)->get_card(i)->get_value(true), g2.get_player_hand(2)->get_card(i)->get_value(true));
+    }
+
+    g1.set_action_for_player(1);
+    g1.set_action_for_player(2);
+    g2.set_action_for_player(1);
+    g2.set_action_for_player(2);
+    
+    for (int i = 0; i < g1.get_player_hand_size(1); i++) {
+        GTEST_ASSERT_EQ(g1.get_player_hand(1)->get_card(i)->get_value(true), g2.get_player_hand(1)->get_card(i)->get_value(true));
+        GTEST_ASSERT_EQ(g1.get_player_hand(2)->get_card(i)->get_value(true), g2.get_player_hand(2)->get_card(i)->get_value(true));
+    }
+
+    g1.set_action_for_player(2);
+    g2.set_action_for_player(2);
+
+    for (int i = 0; i < g1.get_player_hand_size(1); i++) {
+        GTEST_ASSERT_EQ(g1.get_player_hand(1)->get_card(i)->get_value(true), g2.get_player_hand(1)->get_card(i)->get_value(true));
+        GTEST_ASSERT_EQ(g1.get_player_hand(2)->get_card(i)->get_value(true), g2.get_player_hand(2)->get_card(i)->get_value(true));
+    }
+
+}
 
 
 TEST(cribbage, copy_test) {
@@ -294,12 +339,12 @@ TEST(cribbage, copy_test) {
     game.setup_round();
 
     simulator::cribbage copy = game;
-    GTEST_ASSERT_EQ(game.discard_done(), copy.discard_done());
+    GTEST_ASSERT_EQ(game.is_discard_done(), copy.is_discard_done());
 
     simulator::cribbage cp1;
     cp1 = simulator::cribbage(1);
 
-    GTEST_ASSERT_NE(game.discard_done(), cp1.discard_done());  
+    GTEST_ASSERT_NE(game.is_discard_done(), cp1.is_discard_done());  
     int num_copies = 1;
     
     simulator::cribbage *start_copy[20];
@@ -335,18 +380,17 @@ TEST(cribbage, copy_test) {
     game = simulator::cribbage(1, &p1, &p2, 1);
 
     game.setup_round();
-    game.set_discard(p1.poll_player(true, game.get_player_hand(1), game.cards_played, game.num_cards_played, game.sum_cards, game.get_player_hand(2)->get_num_cards(), game.player1_score, game.player2_score, !game.pone_to_play), 1);
-    game.set_discard(p2.poll_player(true, game.get_player_hand(2), game.cards_played, game.num_cards_played, game.sum_cards, game.get_player_hand(1)->get_num_cards(), game.player2_score, game.player1_score, !game.pone_to_play), 2);
-    game.handle_discards();
-    game.setup_play_phase();
+    game.set_action_for_player(2);
+    game.set_action_for_player(1);
+    game.setup_play_phase(); //redundant
 
     simulator::cribbage g2 = simulator::cribbage(game);
-    game.set_current_player();
-    game.set_play_action(p2.poll_player(false, game.get_player_hand(2), game.cards_played, game.num_cards_played, game.sum_cards, game.get_player_hand(1)->get_num_cards(), game.player2_score, game.player1_score, !game.pone_to_play));
+    game.set_action_for_player(2);
     game.resolve_action();
+
+    GTEST_ASSERT_EQ(game.get_player_hand_size(2), 3); //if no other errors prob copy error
     
-    g2.set_current_player();
-    g2.set_play_action(p2.poll_player(false, g2.get_player_hand(2), g2.cards_played, g2.num_cards_played, g2.sum_cards, g2.pone_hand.get_num_cards(), g2.player2_score, g2.player1_score, !g2.pone_to_play));
+    g2.set_action_for_player(2);
     g2.resolve_action();
 
     GTEST_ASSERT_EQ(g2.get_player_hand_size(1), game.get_player_hand_size(1));
@@ -424,10 +468,9 @@ TEST(cribbage, state_key_apply_action_from_list) {
     GTEST_ASSERT_EQ(p2_dis_key, "3_4_4_4_7_11_|");
 
     game.apply_action_from_list(0); //player 1 discard cards
-    
-    GTEST_ASSERT_EQ(game.available_actions_indexes[game.available_actions[0][0]], 1);
-    GTEST_ASSERT_TRUE(*game.current_hand->get_card(game.available_actions_indexes[game.available_actions[0][0]]) == player_and_opp_hand[1]);
     game.apply_action_from_list(0); //player 2 discard cards
+
+    //might do some fancy check here if the correct action is selected but can also be viewed from the next game state
     // Hmmm, maybe I should have some safeguards to stop player 1 playing as player 2. That sounds like a painfull bug.
     // TODO: later
 
@@ -437,10 +480,10 @@ TEST(cribbage, state_key_apply_action_from_list) {
     p2_dis_key = game.get_informationstate_string(2);
     GTEST_ASSERT_EQ(p2_dis_key, "4_4_7_11_|");
 
-    GTEST_ASSERT_EQ(game.current_hand->get_card(game.available_actions_indexes[game.available_actions[0][0]])->get_value(true) ,4);
-    GTEST_ASSERT_EQ(game.current_hand->get_card(game.available_actions_indexes[game.available_actions[1][0]])->get_value(true) ,4);
-    GTEST_ASSERT_EQ(game.current_hand->get_card(game.available_actions_indexes[game.available_actions[2][0]])->get_value(true) ,7);
-    GTEST_ASSERT_EQ(game.current_hand->get_card(game.available_actions_indexes[game.available_actions[3][0]])->get_value(true) ,11);
+    GTEST_ASSERT_EQ(game.get_player_hand(2)->get_card(game.get_available_action_indexes()[game.get_available_actions()[0][0]])->get_value(true) ,4);
+    GTEST_ASSERT_EQ(game.get_player_hand(2)->get_card(game.get_available_action_indexes()[game.get_available_actions()[1][0]])->get_value(true) ,4);
+    GTEST_ASSERT_EQ(game.get_player_hand(2)->get_card(game.get_available_action_indexes()[game.get_available_actions()[2][0]])->get_value(true) ,7);
+    GTEST_ASSERT_EQ(game.get_player_hand(2)->get_card(game.get_available_action_indexes()[game.get_available_actions()[3][0]])->get_value(true) ,11);
 
 
     game.apply_action_from_list(2);
@@ -585,4 +628,77 @@ TEST(cribbage, skip_to_playphase) {
     p2_dis_key = game.get_informationstate_string(2);
     GTEST_ASSERT_EQ(p2_dis_key, "4_4_4_|7_");
 
+}
+
+TEST(cribbage, cribbage_order) {
+
+    greedyplayer p1 = greedyplayer();
+    greedyplayer p2 = greedyplayer();
+    simulator::cribbage game = simulator::cribbage(1, &p1, &p2, 1);
+
+    mock_deck deck = mock_deck();
+    
+    card player_and_opp_hand[13];
+
+    //player hand
+    player_and_opp_hand[0] = card(13, 'D');
+    player_and_opp_hand[1] = card(3, 'D');
+    player_and_opp_hand[2] = card(7, 'D');
+    player_and_opp_hand[3] = card(5, 'C');
+    player_and_opp_hand[4] = card(10, 'S');
+    player_and_opp_hand[5] = card(11, 'S');
+    //opp hand
+    player_and_opp_hand[6] = card(4, 'H');
+    player_and_opp_hand[7] = card(4, 'S');
+    player_and_opp_hand[8] = card(4, 'D');
+    player_and_opp_hand[9] = card(3, 'S');
+    player_and_opp_hand[10] = card(11, 'H');
+    player_and_opp_hand[11] = card(7, 'H');
+
+    //cut
+    player_and_opp_hand[12] = card(2, 'H');
+
+    card cards_played[8];
+    card crib[5];
+
+    deck.set_top_13_cards(player_and_opp_hand);
+    game.set_deck(&deck);
+
+    game.setup_round();
+
+    game.set_action_for_player(2);
+    game.set_action_for_player(1);
+
+    GTEST_ASSERT_TRUE(game.is_discard_done());
+    GTEST_ASSERT_EQ(game.get_current_player(), 2);
+
+    game.reset();
+    game.setup_round();
+
+    GTEST_ASSERT_FALSE(game.is_discard_done());
+
+    game.set_action_for_player(1);
+    game.set_action_for_player(2);
+
+    GTEST_ASSERT_TRUE(game.is_discard_done());
+    GTEST_ASSERT_EQ(game.get_current_player(), 1);
+
+    game.reset();
+    game.setup_round();
+
+    game.set_action_for_player(1);
+    game.set_action_for_player(2);
+
+    GTEST_ASSERT_TRUE(game.is_discard_done());
+    GTEST_ASSERT_EQ(game.get_current_player(), 2);
+
+    simulator::cribbage g2 = simulator::cribbage(1, &p1, &p2, 1);
+
+    g2.setup_round();
+    g2.set_action_for_player(2);
+    g2.set_action_for_player(1);
+    g2.setup_play_phase(); //redundant
+
+    g2.set_action_for_player(2);
+    g2.resolve_action();
 }

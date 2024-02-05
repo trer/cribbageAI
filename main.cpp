@@ -10,41 +10,8 @@
 
 using namespace std;
 
-int main(int argc, char const *argv[])
-{
-    std::string filename = "mccfr_policy_100000.bin"; 
-    std::mt19937 gen(1);
-    greedyplayer p1 = greedyplayer();
-    greedyplayer p2 = greedyplayer();
-    simulator::cribbage game = simulator::cribbage(2, &p1, &p2);
-    policy* p;
-    if (std::filesystem::exists(filename)) {
-        cout << "Policy found!" << endl;
-        p = new policy();
-        p->deserialize(filename); 
-        cout << "Policy deserialized" << endl;
-    } else {
-        mccfrplayer mccfr = mccfrplayer(&game, 0.06, &gen);
-
-        int num_iter = 100000;
-        cout << "starting training" << endl;
-        auto training_start = std::chrono::high_resolution_clock::now();
-        for (int i = 0; i < num_iter; i++) {
-            mccfr.iteration();
-        }
-        
-        auto training_end = std::chrono::high_resolution_clock::now();
-        cout << "finished training : " << std::chrono::duration_cast<std::chrono::milliseconds>(training_end - training_start).count() << " milliseconds." << endl;
-        policy* p = mccfr.average_policy();
-        p->serialize(filename);
-        auto save_done = std::chrono::high_resolution_clock::now();
-        cout << "saved policy: " << std::chrono::duration_cast<std::chrono::milliseconds>(save_done - training_end) << " milliseconds." << endl;
-    }
-    int num_games = 10000;
-    int greedypoints = 0;
-    int mccfrpoints = 0;
+void test_policy(simulator::cribbage game, int num_games, policy* p, std::mt19937 gen, int mccfrpoints, int greedypoints) {
     int win;
-    
     auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < num_games; i++)
     {
@@ -53,17 +20,17 @@ int main(int argc, char const *argv[])
         game.skip_to_play_phase();
         while (!game.is_playphase_done()) {
             if (game.get_current_player() == 1) {
-                std::vector<double> ac1 = p->action_probabilities(&game, 1);
-                std::discrete_distribution<int> d(ac1.begin(), ac1.end());
-                int sampled_action_index = d(gen);
-                win = game.apply_action_from_list(sampled_action_index);
-            } else {
-                game.set_play_action(p2.poll_player(!game.discard_done(), game.get_player_hand(2), game.cards_played_since_new_stack, game.num_cards_played_since_new_stack, game.sum_cards, game.get_player_hand_size(1), game.get_player1_score(), game.get_player2_score(), !game.pone_to_play));
-                game.resolve_action();
-                game.set_current_player();
                 if (game.get_num_available_actions() == 0 && !game.is_playphase_done()) {
                     win = game.apply_action_from_list(-1);
+                } else {
+                    std::vector<double> ac1 = p->action_probabilities(game.get_informationstate_string(1), game.get_num_available_actions());
+                    std::discrete_distribution<int> d(ac1.begin(), ac1.end());
+                    int sampled_action_index = d(gen);
+                    win = game.apply_action_from_list(sampled_action_index);
                 }
+            } else {
+                game.set_action_for_player(2);
+                win = game.resolve_action();
             }
             if (win != 0) {
                 std::cout << "hold up" << std::endl;
@@ -83,5 +50,61 @@ int main(int argc, char const *argv[])
     cout << "mccfrpoints / greedypoints: " << (double) mccfrpoints / greedypoints << endl;
     cout << "Duration in milliseconds: " << duration.count() << endl;
     cout << "With " << num_games << " rounds, that is " << (double) duration.count() / num_games << " milliseconds per round!" << endl;
+
+}
+
+int main(int argc, char const *argv[])
+{
+    std::string filename = "mccfr_policy_100000.bin"; 
+    std::mt19937 gen(20);
+    greedyplayer p1 = greedyplayer();
+    greedyplayer p2 = greedyplayer();
+    simulator::cribbage game = simulator::cribbage(5, &p1, &p2);
+    policy* p = new policy();
+
+
+    int num_games = 10000;
+    int greedypoints = 0;
+    int mccfrpoints = 0;
+
+
+    cout << "Testing a random policy" << endl;
+    test_policy(game, num_games, p, gen, mccfrpoints, greedypoints);
+
+    delete p;
+
+
+    if (std::filesystem::exists(filename)) {
+        cout << "Policy found!" << endl;
+        p = new policy();
+        p->deserialize(filename); 
+        cout << "Policy deserialized" << endl;
+    } else {
+        mccfrplayer mccfr = mccfrplayer(&game, 0.06, &gen);
+
+        int num_iter = 100000;
+        cout << "starting training" << endl;
+        auto training_start = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < num_iter; i++) {
+            mccfr.iteration();
+        }
+        
+        auto training_end = std::chrono::high_resolution_clock::now();
+        cout << "finished training : " << std::chrono::duration_cast<std::chrono::milliseconds>(training_end - training_start).count() << " milliseconds." << endl;
+        p = mccfr.average_policy();
+        p->serialize(filename);
+        auto save_done = std::chrono::high_resolution_clock::now();
+        cout << "saved policy: " << std::chrono::duration_cast<std::chrono::milliseconds>(save_done - training_end) << " milliseconds." << endl;
+    }
+
+    std::mt19937 gen2(1);
+    simulator::cribbage game2 = simulator::cribbage(5, &p1, &p2);
+
+
+    num_games = 10000;
+    greedypoints = 0;
+    mccfrpoints = 0;
+
+    test_policy(game2, num_games, p, gen, mccfrpoints, greedypoints);
     return 0;
 }
