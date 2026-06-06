@@ -116,7 +116,7 @@ TEST(cribbage, test_cribbage) {
     mockplayer p2 = mockplayer();
     simulator::cribbage game = simulator::cribbage(1, &p1, &p2, 1);
 
-    mock_deck deck = mock_deck();
+    mock_deck deck = mock_deck(); //check init
     
     card player_and_opp_hand[13];
 
@@ -337,6 +337,7 @@ TEST(cribbage, copy_test) {
     greedyplayer p2 = greedyplayer();
     simulator::cribbage game = simulator::cribbage(1, &p1, &p2, 1);
     game.setup_round();
+    game.skip_to_play_phase();
 
     simulator::cribbage copy = game;
     GTEST_ASSERT_EQ(game.is_discard_done(), copy.is_discard_done());
@@ -382,7 +383,6 @@ TEST(cribbage, copy_test) {
     game.setup_round();
     game.set_action_for_player(2);
     game.set_action_for_player(1);
-    game.setup_play_phase(); //redundant
 
     simulator::cribbage g2 = simulator::cribbage(game);
     game.set_action_for_player(2);
@@ -404,6 +404,38 @@ TEST(cribbage, copy_test) {
     {
         GTEST_ASSERT_TRUE(compare_cards(g2.get_player_hand(2)->get_card(i), game.get_player_hand(2)->get_card(i)));
     }
+
+    card player_and_opp_hand[13];
+
+    //player hand
+    player_and_opp_hand[0] = card(1, 'D');
+    player_and_opp_hand[1] = card(3, 'D');
+    player_and_opp_hand[2] = card(2, 'S');
+    player_and_opp_hand[3] = card(2, 'C');
+    player_and_opp_hand[4] = card(10, 'S');
+    player_and_opp_hand[5] = card(11, 'S');
+    //opp hand
+    player_and_opp_hand[6] = card(1, 'H');
+    player_and_opp_hand[7] = card(2, 'D');
+    player_and_opp_hand[8] = card(1, 'S');
+    player_and_opp_hand[9] = card(4, 'H');
+    player_and_opp_hand[10] = card(11, 'H');
+    player_and_opp_hand[11] = card(7, 'H');
+
+    //cut
+    player_and_opp_hand[12] = card(2, 'H');
+    
+    mock_deck d = mock_deck();
+    d.set_top_13_cards(player_and_opp_hand);
+    game = simulator::cribbage(1, &p1, &p2, 1, &d);
+
+    simulator::cribbage g3 = simulator::cribbage(game);
+
+    g3.reset();
+    g3.setup_round();
+
+    GTEST_ASSERT_EQ(g3.get_informationstate_string(1), "1_2_2_3_10_11_|");
+
 
 }
 
@@ -560,9 +592,12 @@ TEST(cribbage, state_key_apply_action_from_list) {
 
     GTEST_ASSERT_EQ(game.is_playphase_done(), true);
 
-    int illigal = game.apply_action_from_list(0);
+    try {
+        int illigal = game.apply_action_from_list(0);
+        GTEST_FAIL() << "Should not be possible to apply action from list when playphase is done";
+    } catch (std::runtime_error e) {
 
-    GTEST_ASSERT_EQ(illigal, -99);
+    }
 
     p1_dis_key = game.get_informationstate_string(1);
     GTEST_ASSERT_EQ(p1_dis_key, "|11_");   
@@ -595,7 +630,7 @@ TEST(cribbage, skip_to_playphase) {
     player_and_opp_hand[6] = card(4, 'H');
     player_and_opp_hand[7] = card(4, 'S');
     player_and_opp_hand[8] = card(4, 'D');
-    player_and_opp_hand[9] = card(3, 'S');
+    player_and_opp_hand[9] = card(1, 'S');
     player_and_opp_hand[10] = card(11, 'H');
     player_and_opp_hand[11] = card(7, 'H');
 
@@ -609,6 +644,10 @@ TEST(cribbage, skip_to_playphase) {
     game.set_deck(&deck);
 
     game.setup_round();
+
+    GTEST_ASSERT_EQ(game.get_player_hand_size(1), 6);
+    GTEST_ASSERT_EQ(game.get_player_hand_size(2), 6);
+
     game.skip_to_play_phase();
 
     std::string p1_dis_key = game.get_informationstate_string(1);
@@ -618,16 +657,29 @@ TEST(cribbage, skip_to_playphase) {
     GTEST_ASSERT_EQ(p2_dis_key, "4_4_4_7_|");
 
     int num = game.get_num_available_actions();
-    int win = game.apply_action_from_list(4);
+    int win;
+    try {
+        win = game.apply_action_from_list(4);
+        GTEST_FAIL() << "Trying to apply an action that is outside the number of actions, and the game does not crash!";
+    } catch (std::runtime_error e) {
 
+    }
     GTEST_ASSERT_EQ(num, 4);
-    GTEST_ASSERT_EQ(win, -99);
-    
     win = game.apply_action_from_list(3);
 
     p2_dis_key = game.get_informationstate_string(2);
     GTEST_ASSERT_EQ(p2_dis_key, "4_4_4_|7_");
 
+    game.reset();
+    game.setup_round();
+    game.skip_to_play_phase();
+    simulator::cribbage game_copy = simulator::cribbage(game);
+
+    GTEST_ASSERT_EQ(game.get_player_hand_size(1), game_copy.get_player_hand_size(1));
+    GTEST_ASSERT_EQ(game.get_player_hand_size(2), game_copy.get_player_hand_size(2));
+
+    GTEST_ASSERT_EQ(game.get_informationstate_string(1), game_copy.get_informationstate_string(1));
+    GTEST_ASSERT_EQ(game.get_informationstate_string(2), game_copy.get_informationstate_string(2));
 }
 
 TEST(cribbage, cribbage_order) {
@@ -697,8 +749,147 @@ TEST(cribbage, cribbage_order) {
     g2.setup_round();
     g2.set_action_for_player(2);
     g2.set_action_for_player(1);
-    g2.setup_play_phase(); //redundant
 
     g2.set_action_for_player(2);
     g2.resolve_action();
+}
+
+TEST(cribbage, set_player) {
+
+    mockplayer p1 = mockplayer();
+    mockplayer p2 = mockplayer();
+
+    for(int i=0; i<6; i++) {
+        p1.order[i] = i;
+        p2.order[i] = i;
+    }
+    simulator::cribbage game = simulator::cribbage(1, &p1, &p2, 1);
+
+    mock_deck deck = mock_deck();
+    
+    card player_and_opp_hand[13];
+
+    //player hand
+    player_and_opp_hand[0] = card(13, 'D');
+    player_and_opp_hand[1] = card(3, 'D');
+    player_and_opp_hand[2] = card(7, 'D');
+    player_and_opp_hand[3] = card(5, 'C');
+    player_and_opp_hand[4] = card(10, 'S');
+    player_and_opp_hand[5] = card(11, 'S');
+    //opp hand
+    player_and_opp_hand[6] = card(4, 'H');
+    player_and_opp_hand[7] = card(4, 'S');
+    player_and_opp_hand[8] = card(4, 'D');
+    player_and_opp_hand[9] = card(3, 'S');
+    player_and_opp_hand[10] = card(11, 'H');
+    player_and_opp_hand[11] = card(7, 'H');
+
+    //cut
+    player_and_opp_hand[12] = card(2, 'H');
+
+    card cards_played[8];
+    card crib[5];
+
+    crib[0] = player_and_opp_hand[0];
+    crib[1] = player_and_opp_hand[1];
+    crib[2] = player_and_opp_hand[6];
+    crib[3] = player_and_opp_hand[7];
+    
+
+    deck.set_top_13_cards(player_and_opp_hand);
+    game.set_deck(&deck);
+
+    game.setup_round();
+
+    game.set_action_for_player(1);
+    game.set_action_for_player(2);
+
+    hand* crib_hand = game.get_player_hand(-1);
+
+    for (int i=0; i < 4; i++) {
+        card c = crib[i];
+        bool found = false;
+        for (int j = 0; j < 4; j++) {
+            if (compare_cards(&c, crib_hand->get_card(j))) {
+                found = true;
+            }
+        }
+        GTEST_ASSERT_TRUE(found);
+    }
+
+    randomplayer new_player_random = randomplayer();
+    game.set_player(&new_player_random, 1);
+
+    game.reset();
+    game.setup_round();
+    for(int i=0; i<6; i++) {
+        p1.order[i] = i;
+        p2.order[i] = i;
+    }
+    p1.count=0;
+    p2.count=0;
+
+    int current_player = game.get_current_player();
+    GTEST_ASSERT_EQ(current_player, 1);
+
+
+    game.set_action_for_player(1);
+    game.set_action_for_player(2);
+    bool founds[4] = {false};
+    for (int i=0; i < 4; i++) {
+        card c = crib[i];
+        for (int j = 0; j < 4; j++) {
+            if (compare_cards(&c, crib_hand->get_card(j))) {
+                founds[i] = true;
+            }
+        }
+    }
+    bool all = true;
+    for (int i = 0; i < 4; i++) {
+        all = all && founds[i];
+    }
+    
+    GTEST_ASSERT_FALSE(all);
+
+    for(int i=0; i<6; i++) {
+        p1.order[i] = i;
+        p2.order[i] = i;
+    }
+    p1.count=0;
+    p2.count=0;
+    
+    game.reset();
+    game.setup_round();
+
+    game.set_player(&p1, 1);
+
+    current_player = game.get_current_player();
+    GTEST_ASSERT_EQ(current_player, 2);
+    
+    game.set_action_for_player(2);
+
+    current_player = game.get_current_player();
+    GTEST_ASSERT_EQ(current_player, 1);
+
+    game.set_action_for_player(1);
+    for (int i=0; i<4; i++) {
+        founds[i] = false;
+    }
+    for (int i=0; i < 4; i++) {
+        card c = crib[i];
+        for (int j = 0; j < 4; j++) {
+            if (compare_cards(&c, crib_hand->get_card(j))) {
+                founds[i] = true;
+            }
+        }
+    }
+    all = true;
+    for (int i = 0; i < 4; i++) {
+        all = all && founds[i];
+    }
+    
+    GTEST_ASSERT_TRUE(all);
+
+
+    
 }

@@ -1,0 +1,3 @@
+
+#define SCORE_TO_WIN 121
+#define NUM_CARDS_IN_HAND 6

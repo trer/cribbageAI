@@ -1,8 +1,6 @@
 #pragma once
 #include "cribbage.h"
 
-#define SCORE_TO_WIN 121
-#define NUM_CARDS_IN_HAND 6
 
 using namespace std;
 
@@ -58,6 +56,8 @@ const cribbage& cribbage::operator= (const cribbage& source) {
     */
     if (this != &source) {
         cout << "COPYING FOR ASSIGNMENT, expensive, might want to look into why it is copied" << endl;
+        this->set_player(source.player1, 1);
+        this->set_player(source.player2, 2);
         copy_self(source);
     }
     return *this;
@@ -75,7 +75,11 @@ void cribbage::copy_self(const cribbage &source) {
     seed = source.seed;
 
     base_deck = deck(source.base_deck);
-    game_deck = &base_deck;
+    if (&source.base_deck == source.game_deck) {
+        game_deck = &base_deck;
+    } else {
+        game_deck = source.game_deck;
+    }
 
     if (source.crib.get_num_cards() > 0) {
         crib = hand(source.crib); 
@@ -103,7 +107,7 @@ void cribbage::copy_self(const cribbage &source) {
         next_dealer = source.next_dealer;
 
         dealer_hand = hand(source.dealer_hand);
-        pone_hand = hand(source.pone_hand);
+        pone_hand = hand(source.pone_hand);        
         set_dealer_and_pone(3-next_dealer); //If next dealer is 2 then current is 1. Math checks out
         dealer->set_hand(&dealer_hand);
         pone->set_hand(&pone_hand);
@@ -145,6 +149,15 @@ void cribbage::init(int first_dealer, deck* in_deck) {
     } else {
         game_deck = in_deck;
     }
+
+    if (!player1_ready) {
+        cout << "player 1 not ready, temporary random player initialized" << endl;
+        set_player(new randomplayer(), 1, true);
+    }
+    if (!player2_ready) {
+        cout << "player 2 not ready, temporary random player initialized" << endl;
+        set_player(new randomplayer(), 2, true);
+    }
     
     reset(first_dealer);
 }
@@ -185,33 +198,33 @@ void cribbage::reset(int f_dealer) {
         break;
     }
 
-    //This is also set in swap dealer, so might not need to set here!
-    //Or if I am unlucky it might need to be set backwards here. Keep for a little while.
-    // if (first_dealer == 1) {
-    //     dealer_score = &player1_score;
-    //     pone_score = &player2_score;
-    // } else {
-    //     dealer_score = &player2_score;
-    //     pone_score = &player1_score;
-    // }
-
     next_dealer = first_dealer; //other player will be first dealer next turn
     
 }
 
 
-void cribbage::set_player(player* player, int num) {
+void cribbage::set_player(player* player, int num, bool internal_ptr) {
     /*
      * Sets playerpointer
     */
     if (num == 1) {
+        if (p1_internal_ptr) {
+            delete player1;
+        }
         player1 = player;
         player1_ready = true;
+        p1_internal_ptr = internal_ptr;
     }
     if (num == 2) {
+        if (p2_internal_ptr) {
+            delete player2;
+        }
         player2 = player;
         player2_ready = true;
+        p2_internal_ptr = internal_ptr;
     }
+    set_dealer_and_pone(3-next_dealer);
+    set_current_player();
 }
 
 
@@ -340,21 +353,6 @@ int cribbage::get_current_player() {
      * This requires current player to always be set.
     */
 
-    //Current player is always set, and is therefor safer to use!
-    // if (!pone_discard_done) {
-    //     if(pone == player1) {
-    //         return 1;
-    //     } else {
-    //         return 2;
-    //     }
-    // }
-    // if (!dealer_discard_done) {
-    //     if(dealer == player1) {
-    //         return 1;
-    //     } else {
-    //         return 2;
-    //     }
-    // }
 
     if (current_player == player1) {
         return 1;
@@ -398,6 +396,7 @@ hand *cribbage::get_player_hand(int player) {
      * Best if this can be avoided being used, but I don't think that is possible.
      * returns the hand of a player (not a good security choice, but will only be me running the code).
      * -1 returns the crib
+     * Might behave weird if player is not set!
     */
     if(player == 1) {
         if (player1 == dealer) {
@@ -429,8 +428,16 @@ int cribbage::get_num_cards_played() {
     return num_cards_played_since_new_stack;
 }
 
+int cribbage::get_num_cards_played_since_new_stack() {
+    return num_cards_played_since_new_stack;
+}
+
 card* cribbage::get_cards_played() {
     return cards_played_since_new_stack;
+}
+
+card* cribbage::get_all_cards_played() {
+    return cards_played;
 }
 
 int cribbage::get_sum_cards_played() {
@@ -440,18 +447,18 @@ int cribbage::get_sum_cards_played() {
     return sum_cards;
 }
 
-void cribbage::set_discard(action a) {
+int cribbage::set_discard(action a) {
     /*
      * If you know which player's turn it is to discard you don't have to know wheter they are a dealer or not.
     */
     if (current_player == dealer) {
-        set_discard(a, 'd');
+        return set_discard(a, 'd');
     } else {
-        set_discard(a, 'p');
+        return set_discard(a, 'p');
     }
 }
 
-void cribbage::set_discard(action a, char player) {
+int cribbage::set_discard(action a, char player) {
     /*
      * Sets discard of player (pone or dealer)
      * Calls set_current player to update leagal moves
@@ -474,27 +481,29 @@ void cribbage::set_discard(action a, char player) {
     }
     
     if (pone_discard_done && dealer_discard_done) {
-        handle_discards();
+        return handle_discards();
     }
+    return 0;
 }
 
-void cribbage::set_discard(action a, int player) {
+int cribbage::set_discard(action a, int player) {
     /*
      * Sets discard for a spesific player.
     */
     if (player == 1) {
         if (player1 == dealer) {
-            set_discard(a, 'd');
+            return set_discard(a, 'd');
         } else {
-           set_discard(a, 'p');
+            return set_discard(a, 'p');
         }
     } else if (player == 2) {
         if (player2 == dealer) {
-            set_discard(a, 'd');
+            return set_discard(a, 'd');
         } else {
-            set_discard(a, 'p');
+            return set_discard(a, 'p');
         }
     }
+    return 0;
 }
 
 void cribbage::set_play_action(action a) {
@@ -533,26 +542,17 @@ void cribbage::set_action_for_player(int p_int) {
             }
         }
         if (is_pone) {
-            set_discard(pone->poll_player(!is_discard_done(), &pone_hand, cards_played_since_new_stack, num_cards_played_since_new_stack, sum_cards, pone->get_hand()->get_num_cards(), *pone_score, *dealer_score, false), 'p');
+            set_discard(pone->poll_player(true, &pone_hand, cards_played_since_new_stack, num_cards_played_since_new_stack, sum_cards, pone_hand.get_num_cards(), *pone_score, *dealer_score, false), 'p');
         } else {
-            set_discard(dealer->poll_player(!is_discard_done(), &dealer_hand, cards_played_since_new_stack, num_cards_played_since_new_stack, sum_cards, dealer->get_hand()->get_num_cards(), *dealer_score, *pone_score, true), 'd');
+            set_discard(dealer->poll_player(true, &dealer_hand, cards_played_since_new_stack, num_cards_played_since_new_stack, sum_cards, dealer_hand.get_num_cards(), *dealer_score, *pone_score, true), 'd');
         }
 
     } else {
         //If it is not discard phase just poll current player
-        set_play_action(current_player->poll_player(!is_discard_done(), current_hand, cards_played_since_new_stack, num_cards_played_since_new_stack, sum_cards, get_player_hand_size(3-p_int), *current_player_score, *current_opp_score, !pone_to_play));
+        set_play_action(current_player->poll_player(false, current_hand, cards_played_since_new_stack, num_cards_played_since_new_stack, sum_cards, get_player_hand_size(3-p_int), *current_player_score, *current_opp_score, !pone_to_play));
     }
 
     
-}
-
-void cribbage::setup_play_phase() {
-    /*
-     * Sets up the play-phase.
-     * Currently this is moved to setup_round, so this might not be needed
-    */
-    //pass
-    //TODO: remove
 }
 
 int cribbage::resolve_action() {
@@ -563,15 +563,21 @@ int cribbage::resolve_action() {
     */
 
     //if action is not go, then play the card and score the acting player
-    if (acting_player_action.card1 != 0) {
-        cards_played[num_cards_played] = *acting_player_action.card1;
-        cards_played_since_new_stack[num_cards_played_since_new_stack] = *acting_player_action.card1;
+    if (acting_player_action.card1.get_suit(false) != 'N') {
+        if (!check_valid_move(!is_discard_done(), cards_played_since_new_stack, num_cards_played_since_new_stack, sum_cards, crib.get_cards(), crib.get_num_cards(), current_hand->get_cards(), current_hand->get_num_cards(), acting_player_action)) {
+            cout << "Illigal move in resolve action, returning" << endl;
+            check_valid_move(!is_discard_done(), cards_played_since_new_stack, num_cards_played_since_new_stack, sum_cards, crib.get_cards(), crib.get_num_cards(), current_hand->get_cards(), current_hand->get_num_cards(), acting_player_action);
+            throw std::runtime_error("cribbage: resolve_action: The action set is not a legal action!");
+            return 99;
+        }
+        cards_played[num_cards_played] = acting_player_action.card1;
+        cards_played_since_new_stack[num_cards_played_since_new_stack] = acting_player_action.card1;
         num_cards_played++;
         num_cards_played_since_new_stack++;
-        sum_cards = sum_cards + acting_player_action.card1->get_value(false);
-        *current_player_score = *current_player_score + score_played_card(cards_played_since_new_stack, num_cards_played_since_new_stack, acting_player_action.card1, sum_cards);
+        sum_cards = sum_cards + acting_player_action.card1.get_value(false);
+        *current_player_score = *current_player_score + score_played_card(cards_played_since_new_stack, num_cards_played_since_new_stack, &acting_player_action.card1, sum_cards);
         //once we are done with the card we can remove it
-        current_hand->remove_card(acting_player_action.card1);
+        current_hand->remove_card(&acting_player_action.card1);
     } else {
         //otherwise check if the other player has already called go
         if (pone_to_play) {
@@ -597,6 +603,16 @@ int cribbage::resolve_action() {
     //swap current player
     pone_to_play = !pone_to_play;
     set_current_player();
+
+    //if a player has no legal moves do their turn automatically
+    if (get_num_available_actions() == 0 && !is_playphase_done()) {
+        set_play_action(action());
+        return resolve_action();
+    }
+
+    if (get_player_hand_size(1) == 0 && get_player_hand_size(2) == 0) {
+        last_card_played();
+    }
     return check_win();
 }
 
@@ -618,7 +634,6 @@ int cribbage::play_phase() {
     /*
      * runs the play_phase automatically, might want to remove this as it sorta crashes with the rest of the program.
     */
-    setup_play_phase();
     while (pone_hand.get_num_cards() || dealer_hand.get_num_cards()) {
         
         set_current_player(); //update current acting player
@@ -650,7 +665,6 @@ int cribbage::play_phase() {
         }
         
     }
-    last_card_played();
     if (check_win()) {
         return check_win();
     }
@@ -712,7 +726,6 @@ void cribbage::setup_round() {
      * Sets all variables to what they should be.
      * Also setup while we are at it
     */
-    
     swap_dealer();
     game_deck->shuffle();
     round_done = false;
@@ -797,15 +810,15 @@ int cribbage::handle_discards() {
         return -2;
     }
     crib_cards[4];
-    crib_cards[0] = *dealer_discard.card1;
-    crib_cards[1] = *dealer_discard.card2;
-    crib_cards[2] = *pone_discards.card1;
-    crib_cards[3] = *pone_discards.card2;
+    crib_cards[0] = dealer_discard.card1;
+    crib_cards[1] = dealer_discard.card2;
+    crib_cards[2] = pone_discards.card1;
+    crib_cards[3] = pone_discards.card2;
 
     crib = hand(game_deck, crib_cards, 4);
     //once we are done with everything else we can remove the cards
-    dealer_hand.remove_2card(dealer_discard.card1, dealer_discard.card2);
-    pone_hand.remove_2card(pone_discards.card1, pone_discards.card2);
+    dealer_hand.remove_2card(&dealer_discard.card1, &dealer_discard.card2);
+    pone_hand.remove_2card(&pone_discards.card1, &pone_discards.card2);
     
 
     //give the cut to all hands
@@ -827,9 +840,9 @@ int cribbage::round() {
     */
     setup_round();
 
-    pone_discards = pone->poll_player(true, &pone_hand, 0, 0, 0, 6, *pone_score, *dealer_score, false);
-    dealer_discard = dealer->poll_player(true, &dealer_hand, 0, 0, 0, 6, *dealer_score, *pone_score, true);
-    int discard_winner = handle_discards();
+    set_discard(pone->poll_player(true, &pone_hand, 0, 0, 0, 6, *pone_score, *dealer_score, false), 'p');
+    int discard_winner = set_discard(dealer->poll_player(true, &dealer_hand, 0, 0, 0, 6, *dealer_score, *pone_score, true), 'd');
+    //Check if a player won by seeing the jack on the cut
     if (discard_winner) {
         return discard_winner;
     }
@@ -874,6 +887,9 @@ int cribbage::get_num_available_actions() {
     /*
      * Returns the number of legal actions for the current player
     */
+    if (!round_setup_once) {
+        return 0;
+    }
     return num_available_actions;
 }
 
@@ -908,6 +924,7 @@ int cribbage::apply_action_from_list(int action_index) {
     if (action_index < -1 || action_index >= num_available_actions) {
         //If chosen action is not a legal action return -99 and change no internal states.
         //This could cause recursion
+        throw std::runtime_error("Illigal action done in apply action from list");
         return -99;
     }
     if (!is_discard_done()) {
@@ -919,21 +936,11 @@ int cribbage::apply_action_from_list(int action_index) {
         } else {
             set_play_action(action(current_hand->get_card(available_actions_indexes[available_actions[action_index][0]])));
         }
-        resolve_action();
-        if (get_player_hand_size(1) == 0 && get_player_hand_size(2) == 0) {
-            last_card_played();
-        }
-        win = check_win(); //before a new action is taken we have to check if the game is over.
+        win = resolve_action();
+      
         if (win) {
             return win;
         }
-        // Currently doing that in is_round_done();
-    }
-    //setup next turn
-    set_current_player();
-    //if a player has no available moves he must call go (I want to do this automatically)
-    if (get_num_available_actions() == 0 && !is_playphase_done()) {
-        win = apply_action_from_list(-1);
     }
     return win;
 }
@@ -994,25 +1001,5 @@ std::string cribbage::get_informationstate_string(int player) {
     return result;
 }
 
-std::string cribbage::get_informationstate_string(int player) {
-    /*
-     * Returns a string representing the current information-state.
-     * This will need to be updated as more information abstractions are used.
-    */
-    int n = get_player_hand_size(player);
-    int* card_ranks = new int[n];
-    for (int i = 0; i < n; i++) {
-        card_ranks[i] = get_player_hand(player)->get_card(i)->get_value(true);
-    }
-    sort(card_ranks, card_ranks + n);
-
-    std::string result = "";
-    for (int i = 0; i < n; i++){
-        result.append(to_string(card_ranks[i]) + "_");
-    }
-    
-    delete card_ranks;    
-    return result;
-}
 
 }

@@ -24,17 +24,16 @@ char card::get_suit(bool numeric) {
     if (numeric) {
         switch (suit)
         {
-        case 'D':
-            return 0;
-        
         case 'C':
+            return 0;
+        case 'D':
             return 1;
         case 'H':
             return 2;
         case 'S':
             return 3;
         default:
-            return -1;
+            return int(suit);
             break;
         }
     }

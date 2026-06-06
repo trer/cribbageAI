@@ -1,110 +1,83 @@
 #pragma once
-#include "simulator/player.h"
-#include "simulator/greedyplayer.h"
-#include "simulator/cribbage.h"
-#include "simulator/mccfrplayer.h"
-#include <chrono>
-#include <filesystem>
-#include <iostream>
-#include <string>
+#include "experiments.h"
 
-using namespace std;
 
-void test_policy(simulator::cribbage game, int num_games, policy* p, std::mt19937 gen, int mccfrpoints, int greedypoints) {
-    int win;
-    auto start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < num_games; i++)
-    {
-        game.reset();
-        game.setup_round();
-        game.skip_to_play_phase();
-        while (!game.is_playphase_done()) {
-            if (game.get_current_player() == 1) {
-                if (game.get_num_available_actions() == 0 && !game.is_playphase_done()) {
-                    win = game.apply_action_from_list(-1);
-                } else {
-                    std::vector<double> ac1 = p->action_probabilities(game.get_informationstate_string(1), game.get_num_available_actions());
-                    std::discrete_distribution<int> d(ac1.begin(), ac1.end());
-                    int sampled_action_index = d(gen);
-                    win = game.apply_action_from_list(sampled_action_index);
-                }
-            } else {
-                game.set_action_for_player(2);
-                win = game.resolve_action();
-            }
-            if (win != 0) {
-                std::cout << "hold up" << std::endl;
-            }
-        }
-        // game.matching_setup();
-        // game.matching();
 
-        mccfrpoints += game.get_player1_score();
-        greedypoints += game.get_player2_score();
-    }
+
+int main(int argc, char const *argv[]) {
+
+    int status = 0;
+
+
+    policy lcs_policy = policy();
+    policy ns_policy = policy();
+
+    lcs_policy.deserialize("C:/Users/tor-d/git/cribbageAI/precomputed_policies/52_card_deck_mccfr_policy_hand_last_card_sum_abstraction_100000000.bin");
+    ns_policy.deserialize("C:/Users/tor-d/git/cribbageAI/build/Debug/52_card_deck_mccfr_policy_new_stack_4_choose_1_abstraction_100000000.bin");
     
-    // int p1_wins = game.start_games(num_games);
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-    cout << "mccfr points: " << mccfrpoints << "  greedypoints: " << greedypoints << endl;
-    cout << "mccfrpoints / greedypoints: " << (double) mccfrpoints / greedypoints << endl;
-    cout << "Duration in milliseconds: " << duration.count() << endl;
-    cout << "With " << num_games << " rounds, that is " << (double) duration.count() / num_games << " milliseconds per round!" << endl;
+    
+    cout << "LCS size is: " << lcs_policy.size() << endl;
+    cout << "NS size is: " << ns_policy.size() << endl;
+    
+    ofstream logger("BIG_POLICY_SIZES.txt", ios_base::app);
 
-}
-
-int main(int argc, char const *argv[])
-{
-    std::string filename = "mccfr_policy_100000.bin"; 
-    std::mt19937 gen(20);
-    greedyplayer p1 = greedyplayer();
-    greedyplayer p2 = greedyplayer();
-    simulator::cribbage game = simulator::cribbage(5, &p1, &p2);
-    policy* p = new policy();
+    logger << "LCS size is: " << lcs_policy.size() << endl;
+    logger << "NS size is: " << ns_policy.size() << endl;
+    
+    logger.flush();
+    logger.close();
 
 
-    int num_games = 10000;
-    int greedypoints = 0;
-    int mccfrpoints = 0;
+    // simulator::cribbage game = simulator::cribbage(0);
+    // shared_ptr<simulator::cribbage> game_ptr = make_shared<simulator::cribbage>(game);
+
+    // meta_abstraction meta = meta_abstraction(game_ptr, 0);
+    // greedy_abstraction greedy_ab = greedy_abstraction(game_ptr);
+    // meta.add_policy(new greedypolicy(), greedy_ab.get_information_abstraction(), greedy_ab.get_action_abstraction());
+
+    // hand_last_card_sum_abstraction ab = hand_last_card_sum_abstraction(game_ptr);
+
+    // train_and_test(10'000'000, 0, &ab, "TEST_last_card_sum_vs_meta_only_greedy", nullptr, &meta);
 
 
-    cout << "Testing a random policy" << endl;
-    test_policy(game, num_games, p, gen, mccfrpoints, greedypoints);
-
-    delete p;
-
-
-    if (std::filesystem::exists(filename)) {
-        cout << "Policy found!" << endl;
-        p = new policy();
-        p->deserialize(filename); 
-        cout << "Policy deserialized" << endl;
-    } else {
-        mccfrplayer mccfr = mccfrplayer(&game, 0.06, &gen);
-
-        int num_iter = 100000;
-        cout << "starting training" << endl;
-        auto training_start = std::chrono::high_resolution_clock::now();
-        for (int i = 0; i < num_iter; i++) {
-            mccfr.iteration();
-        }
-        
-        auto training_end = std::chrono::high_resolution_clock::now();
-        cout << "finished training : " << std::chrono::duration_cast<std::chrono::milliseconds>(training_end - training_start).count() << " milliseconds." << endl;
-        p = mccfr.average_policy();
-        p->serialize(filename);
-        auto save_done = std::chrono::high_resolution_clock::now();
-        cout << "saved policy: " << std::chrono::duration_cast<std::chrono::milliseconds>(save_done - training_end) << " milliseconds." << endl;
+    try {
+        // status = test_abstractions();
+    } catch (runtime_error e) {
+        cout << e.what() << endl;
+        cout << "test abstractions failed" << endl;
     }
 
-    std::mt19937 gen2(1);
-    simulator::cribbage game2 = simulator::cribbage(5, &p1, &p2);
+
+    try {
+        status = test_restricted_policies();
+    } catch (runtime_error e) {
+        cout << e.what() << endl;
+        cout << "restricted policies failed" << endl;
+    }
+
+    
+
+    try {
+        // status = test_meta();
+    } catch (runtime_error e) {
+        cout << e.what() << endl;
+        cout << "test meta failed" << endl;
+    }
+
+    try {
+        // status = test_meta_opp();
+    } catch (runtime_error e) {
+        cout << e.what() << endl;
+        cout << "test meta_opp failed" << endl;
+    }
+
+    try {
+        // status = test_different_starting_points();
+    } catch (runtime_error e) {
+        cout << e.what() << endl;
+        cout << "test generating policies failed" << endl;
+    }
 
 
-    num_games = 10000;
-    greedypoints = 0;
-    mccfrpoints = 0;
-
-    test_policy(game2, num_games, p, gen, mccfrpoints, greedypoints);
-    return 0;
+    return status;
 }

@@ -5,6 +5,8 @@
 #include "../simulator/cheatingutcplayer.h"
 
 TEST(cheatingutcplayer, run_test) {
+    //cheating player is discontinued for now.
+    GTEST_SKIP();
     std::mt19937 gen(1);
     
     greedyplayer p1 = greedyplayer();

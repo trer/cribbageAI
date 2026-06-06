@@ -17,6 +17,7 @@ include(CTest)
 enable_testing()
 
 set(source
+    experiments.cpp
     main.cpp
 )
 

@@ -6,7 +6,6 @@ TEST(card, cardtest) {
     card c1 = card();
     char non_char = 'N';
     GTEST_ASSERT_EQ((int) c1.get_suit(false), (int) non_char) << "An uninitialized card should be N";
-    GTEST_ASSERT_EQ(c1.get_suit(true), -1) << "The nummeric value of the suit Non should be -1";
     GTEST_ASSERT_EQ(c1.get_value(false), 0) << "An uninitialized card should have the value of 0";
 
     char H_char = 'H';

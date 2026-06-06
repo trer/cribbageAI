@@ -6,7 +6,7 @@
 
 using namespace std;
 
-#define MAX_NUM_CARDS 6
+#define MAX_NUM_HANDCARDS 6
 //might want to increase the max_number of cards to 7 if I want to brute force best hand
 
 hand::hand() {
@@ -20,10 +20,7 @@ hand::hand(deck *in_deck) {
 
 hand::hand(deck *in_deck, card* in_cards, int in_num_cards) {
     draw_deck = in_deck;
-    num_cards = in_num_cards;
-    for(int i=0; i<num_cards; i++) {
-        cards[i] = in_cards[i];
-    }
+    set_cards(in_cards, in_num_cards);
     init(in_num_cards);
 }
 
@@ -100,7 +97,7 @@ void hand::draw_cut(){
      * When scoring the this should be acounted for.
      */
     if (!cut_drawn) {
-        if (num_cards >= MAX_NUM_CARDS) {
+        if (num_cards >= MAX_NUM_HANDCARDS) {
             cout << "too many cards in hand, not drawing" << endl;
             return;
         }
@@ -110,11 +107,21 @@ void hand::draw_cut(){
 }
 
 card* hand::get_card(int pos) {
+    if (pos < 0 || pos >= MAX_NUM_HANDCARDS) {
+        throw std::runtime_error("Hand: Trying to get a card that does not exist, most likely because a -1 index is used as a not found somewhere");   
+    }
     return &cards[pos];
 }
 
 card* hand::get_cards() {
     return cards;
+}
+
+void hand::set_cards(card* in_cards, int in_num_cards) {
+    num_cards = in_num_cards;
+    for(int i=0; i<num_cards; i++) {
+        cards[i] = in_cards[i];
+    }
 }
 
 void hand::set_num_cards(int num) {

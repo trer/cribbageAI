@@ -22,6 +22,7 @@ class hand {
         void draw_cut();
         card *get_card(int pos);
         card *get_cards();
+        void set_cards(card* in_cards, int in_num_cards);
         void set_num_cards(int num);
         int get_num_cards() const;
         int get_num_cards();

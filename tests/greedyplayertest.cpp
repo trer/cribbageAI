@@ -1,6 +1,7 @@
 #pragma once
 #include <gtest/gtest.h>
 #include ".././simulator/greedyplayer.h"
+#include "../simulator/abstraction.h"
 
 TEST(greedyplayer, check_discard) {
     
@@ -18,8 +19,8 @@ TEST(greedyplayer, check_discard) {
 
     player_hand[0] = card(10, 'H');
     player_hand[1] = card(9, 'S');
-    player_hand[2] = card(11, 'H');
-    player_hand[3] = card(2, 'H');
+    player_hand[2] = card(8, 'H');
+    player_hand[3] = card(4, 'H');
     player_hand[4] = card(1, 'D');
     player_hand[5] = card(6, 'C');
 
@@ -205,4 +206,91 @@ TEST(greedyplayer, check_play) {
     best_card = g_player.get_best_card(player_hand, num_cards_in_player_hand, cards_played, num_cards_played, sum_cards);
     
     GTEST_ASSERT_EQ(best_card, 2);
+}
+
+
+TEST(greedyplayer, greedypolicy) {
+    greedyplayer g_player = greedyplayer();
+    greedypolicy g_policy = greedypolicy();
+    int best_card;
+
+    std::mt19937 gen(1);
+
+    card player_and_opp_hand[13];
+
+    //player hand
+    player_and_opp_hand[0] = card(1, 'D');
+    player_and_opp_hand[1] = card(3, 'D');
+    player_and_opp_hand[2] = card(2, 'S');
+    player_and_opp_hand[3] = card(2, 'C');
+    player_and_opp_hand[4] = card(10, 'S');
+    player_and_opp_hand[5] = card(11, 'S');
+    //opp hand
+    player_and_opp_hand[6] = card(1, 'H');
+    player_and_opp_hand[7] = card(1, 'C');
+    player_and_opp_hand[8] = card(1, 'S');
+    player_and_opp_hand[9] = card(3, 'H');
+    player_and_opp_hand[10] = card(11, 'H');
+    player_and_opp_hand[11] = card(7, 'H');
+
+    //cut
+    player_and_opp_hand[12] = card(2, 'H');
+    
+    mock_deck d = mock_deck();
+    d.set_top_13_cards(player_and_opp_hand);
+    simulator::cribbage game = simulator::cribbage(1, 1, &d);
+
+    greedy_play act_ab = greedy_play();
+    greedy_view info_ab = greedy_view();
+
+    
+
+    game = simulator::cribbage(1, 1);
+
+    for (int i = 0; i < 10000; i++) {
+        game.reset();
+        game.setup_round();
+        game.skip_to_play_phase();
+        while(!game.is_playphase_done()) {
+            int greedyplayer_index = g_player.get_best_card(game.get_player_hand(game.get_current_player())->get_cards(), game.get_player_hand_size(game.get_current_player()), game.get_cards_played(), game.get_num_cards_played(), game.get_sum_cards_played());
+            card first = *game.get_player_hand(game.get_current_player())->get_card(greedyplayer_index);
+            std::vector<double> ac = g_policy.action_probabilities(&game);
+            std::vector<double> ac2 = g_policy.action_probabilities(info_ab.get_informationstate_string(&game, game.get_current_player()));
+            
+            card before = *game.get_player_hand(game.get_current_player())->get_card(greedyplayer_index);
+
+            double sum = 0.0;
+            int index = 0;
+            double max = -1.0;
+            for (int j=0; j<ac.size(); j++) {
+                sum += ac[j];
+                GTEST_ASSERT_TRUE(ac[j] == 0.0 || ac[j] == 1.0);
+                GTEST_ASSERT_EQ(ac[j], ac2[j]) << "j is: " << j << " and i is: " << i;
+                if (max < ac[j]) {
+                    max = ac[j];
+                    index = j;
+                }
+            }
+            GTEST_ASSERT_EQ(sum, 1.0);
+
+            // GTEST_ASSERT_EQ(index, greedyplayer_index);
+
+            act_ab.apply_action_from_list(&game, index);
+            if(game.get_num_cards_played_since_new_stack() == 0) {
+                bool played = false;
+                for (int i=0; i<8; i++) {
+                    if (compare_cards(&before, &game.get_all_cards_played()[i])) {
+                        played = true;
+                        break;
+                    }
+                }
+                GTEST_ASSERT_TRUE(played);
+            } else {
+                card after = game.get_cards_played()[game.get_num_cards_played_since_new_stack()-1];
+                GTEST_ASSERT_TRUE(compare_cards(&before, &after)) << "before card: " << before.string_format() << " after card: " << after.string_format();
+            }
+        }
+    }   
+    
+
 }

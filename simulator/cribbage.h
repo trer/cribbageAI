@@ -2,6 +2,7 @@
 #include "./card.h"
 #include "./deck.h"
 #include "./hand.h"
+#include "globparameters.h"
 #include "./player.h"
 #include "./scorer.h"
 #include"./utils.h"
@@ -47,10 +48,12 @@ class cribbage {
         
         int seed;
 
-        bool player1_ready;
-        bool player2_ready;
-        bool dealer_discard_done;
-        bool pone_discard_done;
+        bool player1_ready = false;
+        bool player2_ready = false;
+        bool p1_internal_ptr = false;
+        bool p2_internal_ptr = false;
+        bool dealer_discard_done = false;
+        bool pone_discard_done = false;
         bool round_done = false;
         bool round_setup_once = false;
 
@@ -76,7 +79,8 @@ class cribbage {
 
         int play_phase();
         
-        void set_discard(action a, char player);
+        int set_discard(action a, char player);
+        int handle_discards();
         
         int check_win();
         void swap_dealer();
@@ -99,24 +103,22 @@ class cribbage {
         
         void reset(int f_dealer=-1);
         void setup_round();
-        void setup_play_phase();
         void matching_setup();
 
         void skip_to_play_phase(player* discard_policy=nullptr);
 
         //I would like to remove these, but that is a long dream.
         int resolve_action();
-        int handle_discards();
         int matching();
         int matching_score_pone();
         int matching_score_dealer();
         
         void set_deck(deck* in_deck);
-        void set_player(player *player, int num);
+        void set_player(player *player, int num, bool internal_ptr=false);
 
         //Set_discard and set_play_action functionally the same?
-        void set_discard(action a);
-        void set_discard(action a, int player);
+        int set_discard(action a);
+        int set_discard(action a, int player);
         void set_play_action(action a);
         void set_action_for_player(int player);
 
@@ -129,7 +131,9 @@ class cribbage {
         hand* get_player_hand(int player);
         int get_player_hand_size(int player);
         int get_num_cards_played();
+        int get_num_cards_played_since_new_stack();
         card* get_cards_played();
+        card* get_all_cards_played();
         int get_sum_cards_played();
 
         bool is_discard_done();

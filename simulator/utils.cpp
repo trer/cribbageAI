@@ -5,10 +5,13 @@
 
 
 bool compare_cards(card* c1, card* c2) {
+    /*
+    Returns true if both cards have the same suit and rank
+    */
     int c1_value = c1->get_value(true);
     int c2_value = c2->get_value(true);
-    int s1 = c1->get_suit(true);
-    int s2 = c2->get_suit(true);
+    char s1 = c1->get_suit(false);
+    char s2 = c2->get_suit(false);
     return c1_value == c2_value && s1 == s2;
 }
 
@@ -47,9 +50,62 @@ int update_legal_moves(int** available_actions, int* available_actions_indexes, 
      * Counts number of legal moves.
      * Updates available_actions and available_actions_indexes inplace and returns num_available_actions
     */
+    
+    //If the player has one less card than the max hand size they are in the matching phase and thus should not have any moves available
+    if (num_hand_cards == NUM_CARDS_IN_HAND-1) {
+        return 0;
+    }
     bool is_legal_move = false;
     int num_available_actions = 0;
     int offset = 0;
+    card* hand_copy = new card[num_hand_cards];
+    for (int i = 0; i < num_hand_cards; i++) {
+        hand_copy[i] = hand_cards[i];
+    }
+    std::sort(hand_copy, hand_copy + num_hand_cards); // inplace sorting!
+    //map the presented actions to hand
+    for (int i = 0; i < num_hand_cards; i++) {
+        for (int j = 0; j < num_hand_cards; j++) {
+            if (hand_cards[i] == hand_copy[j]) {
+                available_actions_indexes[j] = i;
+            }
+        }
+        
+    }
+
+    if (!discard_done) {
+        for (int i = 0; i < num_hand_cards; i++) {
+            for (int j = i+1; j < num_hand_cards; j++) {
+                available_actions[num_available_actions] = get_array(i, j);
+                num_available_actions++;
+                                
+            }
+        }
+        
+    } else {
+        for (int i=0; i<num_hand_cards; i++) {
+            if (hand_copy[i].get_value(false) + sum_cards_played <= CRIBBAGE_SUM_CEIL) {
+                available_actions[i-offset] = get_array(i);
+                num_available_actions++;
+            } else {
+                offset++;
+            }
+        }
+    }
+    delete hand_copy;
+    return num_available_actions;
+}
+
+int update_legal_moves_24_choose_1(int** available_actions, int* available_actions_indexes, card* hand_cards, int num_hand_cards, int sum_cards_played, bool discard_done) {
+    /*
+     * Iterates over all legal actions in a hand and enumerates them into a list
+     * Number of legal moves will always be 24 at the start of the turn.
+     * Assuming that each index of available actions are already initialized.
+    */
+    bool is_legal_move = false;
+    int num_available_actions = 0;
+    int offset = 0;
+
     card* hand_copy = new card[num_hand_cards];
     for (int i = 0; i < num_hand_cards; i++) {
         hand_copy[i] = hand_cards[i];
@@ -73,19 +129,44 @@ int update_legal_moves(int** available_actions, int* available_actions_indexes, 
                                 
             }
         }
-        
     } else {
-        for (int i=0; i<num_hand_cards; i++) {
-            if (hand_cards[i].get_value(false) + sum_cards_played <= CRIBBAGE_SUM_CEIL) {
-                available_actions[i-offset] = get_array(i);
-                num_available_actions++;
-            } else {
-                offset++;
+        for (int a = 0; a < num_hand_cards; a++) {
+            for (int b = 0 ; b < num_hand_cards; b++) {
+                if (a == b) {
+                    continue;
+                }
+                for (int c = 0; c < num_hand_cards; c++) {
+                    if (a == c || b == c) {
+                        continue;
+                    }
+                    for (int d = 0; d < num_hand_cards; d++) {
+                        if (a == d || b == d || c == d) {
+                            continue;
+                        }
+                        available_actions[num_available_actions][0] = a;
+                        available_actions[num_available_actions][1] = b;
+                        available_actions[num_available_actions][2] = c;
+                        available_actions[num_available_actions][3] = d;
+                        num_available_actions++;
+                    }
+                }  
             }
-        }
+        }   
     }
+    delete hand_copy;
     return num_available_actions;
 }
+
+
+void map_24_to_4(int* a, int* b, int* c, int* d, int index) {
+    *a = (index / 6) % 4;
+    *b = ((index / 2) + 1+(2*(*a))) % 4;
+    *c = (4 + (index % 3) + 1 + (*b)) % 4;
+    *d = (4 + (*c) + ((2*((index+1) % 2) - 1) * ((((index / 2) % 3) % 2) + 1))) % 4;
+}
+
+
+
 
 bool check_valid_move(bool discard_phase, card *cards_played, int num_cards_played, 
                     int sum_cards, card* crib, int num_cards_in_crib, card* player_hand, int num_cards_in_player_hand, 
@@ -104,21 +185,21 @@ bool check_valid_move(bool discard_phase, card *cards_played, int num_cards_play
     //If it is the discard phase and a discard action has been selected return true
     if (discard_phase) {
         //Check that action contains 2 cards
-        if (player_action.card2 == 0) {
+        if (player_action.card2.get_suit(false) == 'N') {
             return false;
         }
-        if (player_action.card1 == 0) {
+        if (player_action.card1.get_suit(false) == 'N') {
             return false;
         }
         //check that both cards are part of the players hand
         //We have to acount for the fact that the player has removed the card(s) they try to play, in this case 2
-        if (!part_of_hand(player_hand, num_cards_in_player_hand+2, player_action.card1)) {
+        if (!part_of_hand(player_hand, num_cards_in_player_hand+2, &player_action.card1)) {
             return false;
         }
-        if (!part_of_hand(player_hand, num_cards_in_player_hand+2, player_action.card2)) {
+        if (!part_of_hand(player_hand, num_cards_in_player_hand+2, &player_action.card2)) {
             return false;
         }
-        if (compare_cards(player_action.card1, player_action.card2)) {
+        if (compare_cards(&player_action.card1, &player_action.card2)) {
             //tries to discard same card twice
             return false;
         }
@@ -127,13 +208,13 @@ bool check_valid_move(bool discard_phase, card *cards_played, int num_cards_play
 
     } else {
         //If it is not the discard phase we check that the second card is not defined
-        if (player_action.card2 != 0) {
+        if (player_action.card2.get_suit(false) != 'N') {
             return false;
         }
     }
     //player tries to play a card
-    if (player_action.card1 != 0) {
-        card* played_card = player_action.card1;
+    if (player_action.card1.get_value(true) != 0) {
+        card* played_card = &player_action.card1;
         //Check that sum of cards wont exceed 31
         if (played_card->get_value(false) + sum_cards > CRIBBAGE_SUM_CEIL) {
             return false;
@@ -194,11 +275,14 @@ std::vector<double> policy::action_probabilities(std::string key) {
     return infostates[key];
 }
 
+int policy::size() {
+    return infostates.size();
+}
 
 std::vector<double> policy::action_probabilities(std::string info_state_key, int num_available_actions) {
 
     if (num_available_actions == 0) {
-        std::cout << "ERROR (probably): action probabilities called from a state that does not have any available actions" << std::endl;
+        throw std::runtime_error("ERROR (probably): action probabilities called from a state that does not have any available actions");
     }
 
     //if the infostate is not present in the strategy return a random move
@@ -269,7 +353,50 @@ bool policy::deserialize(std::string filepath) {
     }
 }
 
+randompolicy::randompolicy() {
+    name = "random policy";
+}
 
+std::vector<double> randompolicy::action_probabilities(std::string key) {
+    return std::vector<double>(); //to make sure it doesn't revert to its base.
+}
+
+std::vector<double> randompolicy::action_probabilities(std::string info_state_key, int num_available_actions) {
+    std::vector<double> uniform = std::vector<double>();
+    std::generate_n(std::back_inserter(uniform), num_available_actions, [] {return 1.0;});
+    for (int i = 0; i < num_available_actions; i++) {
+        uniform[i] = 1.0/num_available_actions;
+    }
+    return uniform;
+}
+
+
+determenisticpolicy::determenisticpolicy(int in_play_index) {
+    play_index = in_play_index;
+    name = "determenistic policy";
+}
+
+std::vector<double> determenisticpolicy::action_probabilities(std::string key) {
+    throw std::runtime_error("Not implemented action probabilities with out knowing the number of available actions");
+    return std::vector<double>(); //to make sure it doesn't revert to its base.
+}
+
+std::vector<double> determenisticpolicy::action_probabilities(std::string info_state_key, int num_available_actions) {
+    std::vector<double> uniform = std::vector<double>();
+    int index_to_play = play_index;
+    if (index_to_play >= num_available_actions) {
+        index_to_play = num_available_actions -1;
+    }
+    std::generate_n(std::back_inserter(uniform), num_available_actions, [] {return 1.0;});
+    for (int i = 0; i < num_available_actions; i++) {
+        if (i == play_index) {
+            uniform[i] = 1.0;
+        } else {
+            uniform[i] = 0.0;
+        }
+    }
+    return uniform;
+}
 
 
 
@@ -294,6 +421,8 @@ int action34[2] = {3,4};
 int action35[2] = {3,5};
 int action45[2] = {4,5};
 
+int action_error[1] = {99};
+
 int* get_array(int i) {
     switch (i)
     {
@@ -307,7 +436,7 @@ int* get_array(int i) {
         return action3;
     default:
         std::cout << "arrays not behaving properly, play" << std::endl;
-        return action0;
+        return action_error;
     }
 }
 
@@ -367,5 +496,5 @@ int* get_array(int i, int j) {
         return action45;
     }
     std::cout << "arrays not behaving properly, discard" << std::endl;
-    return action0;
+    return action_error;
 }

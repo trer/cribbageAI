@@ -1,12 +1,16 @@
 #pragma once
+#include "cribbage.h"
 #include "player.h"
 #include "deck.h"
 #include "scorer.h"
+#include "utils.h"
+
+#include <sstream>
 
 
 
 
-class greedyplayer : public player{
+class greedyplayer : public player {
 
     private:
         internal_deck player_deck = internal_deck();
@@ -24,4 +28,19 @@ class greedyplayer : public player{
 
         action poll_player(bool discard_phase, hand* p_hand, card* cards_played, int num_cards_played, int sum_cards, int opponent_num_cards, int score_self, int score_opp, bool is_dealer);     
 
+};
+
+class greedypolicy : public greedyplayer, public policy{
+
+    private:
+        std::vector<double> poll_player_and_return_probabilities(bool discard_phase, hand* player_hand, card* cards_played, int num_cards_played, int sum_cards_played);
+    public:
+        greedypolicy();
+
+        bool part_of_policy(std::string key);
+        std::vector<double> action_probabilities(std::string key) override;
+        std::vector<double> action_probabilities(std::string info_state_key, int num_available_actions) override;
+        std::vector<double> action_probabilities(simulator::cribbage* game);
+
+        ~greedypolicy() {};
 };

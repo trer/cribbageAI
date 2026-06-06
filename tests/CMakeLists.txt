@@ -7,6 +7,7 @@ include(CTest)
 enable_testing()
 
 set(sources
+    abstractiontest.cpp
     utilstest.cpp
     cardtest.cpp
     cheatingutcplayertest.cpp
@@ -15,8 +16,10 @@ set(sources
     handtest.cpp
     maintest.cpp
     mccfrplayertest.cpp
+    metatest.cpp
     playertest.cpp
     scorertest.cpp
+    statisticstest.cpp
     cribbagetest.cpp
 )
 
